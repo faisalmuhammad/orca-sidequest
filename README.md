@@ -1,4 +1,4 @@
-# Sidequest for Orca
+# Sidequest - Quick Games in Orca
 
 Refresh your mind with a quick game while your agents work.
 
