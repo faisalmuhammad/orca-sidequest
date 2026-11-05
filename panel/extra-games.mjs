@@ -17,18 +17,28 @@ import {
   tickBlock,
 } from './games/blocks.mjs';
 import { createMemory, flipMemory } from './games/memory.mjs';
+import { QUICK_NAMES, QUICK_CREATORS, quickCards, createQuickGames } from './quick-games.mjs';
+import { MORE_NAMES, MORE_CREATORS, moreCards, createMoreGames } from './more-games.mjs';
+import { createSokoban, sokobanCard, createSokobanPanel } from './sokoban.mjs';
 export const EXTRA_NAMES = {
   checkers: 'Checkers',
   blocks: 'Falling Blocks',
   memory: 'Memory',
+  ...QUICK_NAMES,
+  ...MORE_NAMES,
+  sokoban: 'Sokoban',
 };
 export const EXTRA_CREATORS = {
   checkers: () => createCheckers(),
   blocks: (old) => createBlocks(old?.best ?? 0),
   memory: (old) => createMemory(old?.best ?? null),
+  ...QUICK_CREATORS,
+  ...MORE_CREATORS,
+  sokoban: createSokoban,
 };
 export function extraCards(games, icon) {
   return Object.entries(EXTRA_NAMES)
+    .filter(([id]) => id !== 'sokoban' && !Object.hasOwn(QUICK_NAMES, id) && !Object.hasOwn(MORE_NAMES, id))
     .map(([id, name], i) => {
       const state = games[id],
         meta =
@@ -113,7 +123,7 @@ export function extraCards(games, icon) {
         '</span></div></div></button>'
       );
     })
-    .join('');
+    .join('') + quickCards(games, icon) + moreCards(games, icon) + sokobanCard(games, icon);
 }
 export function createExtraGames({
   getSave,
@@ -123,6 +133,9 @@ export function createExtraGames({
   announce,
   onNew,
 }) {
+  const quick = createQuickGames({ getSave, persist, sound, icon, announce, onNew });
+  const more = createMoreGames({ getSave, persist, sound, icon, announce, onNew });
+  const sokoban = createSokobanPanel({ getSave, persist, sound, icon, announce, onNew });
   let mounted = null,
     root = null,
     selected = -1,
@@ -164,6 +177,9 @@ export function createExtraGames({
     );
   }
   function render(id) {
+    if (id === 'sokoban') return sokoban.render();
+    if (Object.hasOwn(MORE_NAMES, id)) return more.render(id);
+    if (Object.hasOwn(QUICK_NAMES, id)) return quick.render(id);
     if (id === 'checkers')
       return (
         '<section id="extra-game" aria-label="Checkers game">' +
@@ -723,6 +739,9 @@ export function createExtraGames({
     }
   }
   function mount(id) {
+    if (id === 'sokoban') { sokoban.mount(); return; }
+    if (Object.hasOwn(MORE_NAMES, id)) { more.mount(id); return; }
+    if (Object.hasOwn(QUICK_NAMES, id)) { quick.mount(id); return; }
     mounted = id;
     root = document.getElementById('extra-game');
     selected = -1;
@@ -752,6 +771,9 @@ export function createExtraGames({
     persist();
   }
   function dispose() {
+    sokoban.dispose();
+    more.dispose();
+    quick.dispose();
     cancelCheckersMotion();
     clearTimeout(aiTimer);
     clearTimeout(memoryTimer);
@@ -769,6 +791,9 @@ export function createExtraGames({
     root = null;
   }
   function focus() {
+    if (sokoban.isMounted()) { sokoban.focus(); return; }
+    if (more.isMounted()) { more.focus(); return; }
+    if (quick.isMounted()) { quick.focus(); return; }
     root
       ?.querySelector(
         mounted === 'blocks'
@@ -780,6 +805,9 @@ export function createExtraGames({
       ?.focus({ preventScroll: true });
   }
   function suspend() {
+    sokoban.suspend();
+    more.suspend();
+    quick.suspend();
     suspended = true;
     clearTimeout(aiTimer);
     aiTimer = null;
@@ -788,6 +816,9 @@ export function createExtraGames({
     if (mounted === 'checkers') update();
   }
   function resume() {
+    sokoban.resume();
+    more.resume();
+    quick.resume();
     suspended = false;
     if (mounted === 'checkers') update();
   }

@@ -1,0 +1,56 @@
+.preview-sokoban { background: radial-gradient(ellipse at 75% 110%, #dda16888, transparent 65%), linear-gradient(135deg, #49334a, #8a5d5d); }
+.preview-sokoban .card-kicker { color: #ffecd1; }
+.mini-sokoban { display: grid; grid-template-columns: repeat(5,1fr); width: 111px; padding: 5px; gap: 2px; margin-top: 15px; border-radius: 10px; background: #283c49; transform: rotate(-8deg); box-shadow: 0 5px 0 #23182966,0 10px 20px #23182944; }
+.mini-sokoban span { height: 18px; border-radius: 2px; display: grid; place-items: center; }
+.mini-sokoban .wall { background: linear-gradient(145deg,#728591,#4c6474); box-shadow: inset 0 1px 0 #aec2ca44,0 2px 0 #213646; }
+.mini-sokoban .floor { background: #304554; }
+.mini-crate { width: 15px; height: 15px; border: 2px solid #bb8749; background: repeating-linear-gradient(45deg,#f5cd87 0 2px,#eeb970 2px 5px); border-radius: 3px; box-shadow: 0 2px 0 #754c27; }
+.mini-goal { width: 11px; height: 11px; border: 2px solid #96e7c6; border-radius: 50%; box-shadow: 0 0 8px #69d9b766; }
+.mini-pusher { width: 13px; height: 13px; border-radius: 50%; background: linear-gradient(145deg,#b4f1d3,#54bca5); box-shadow: inset 0 1px 0 #eaffd7,0 2px 0 #226959; }
+#app[data-library-view='compact'] .mini-sokoban { transform: rotate(-8deg) scale(.62); margin: 0; flex-shrink: 0; }
+.sokoban-level-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 13px; }
+.sokoban-level-nav select { min-width: 0; flex: 1; color: var(--fg); background: var(--card); border: 1px solid var(--line); padding: 7px; border-radius: 8px; font-size: 10px; }
+.sokoban-level-nav .button { width: 31px; padding: 6px; flex-shrink: 0; }
+.soko-stats { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+.soko-stats .stat { padding: 10px; }
+.soko-stats .stat-value { font-size: 23px; }
+.soko-goals { color: var(--teal); background: var(--teal-soft); border-color: color-mix(in srgb,var(--teal) 25%,var(--line)); }
+.soko-goals .stat-label { color: var(--teal); }
+.sokoban-board { position: relative; padding: 10px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb,var(--muted) 75%,#26384b); box-shadow: inset 0 1px 0 #ffffff12,0 6px 16px #14203415; touch-action: none; user-select: none; }
+.soko-ground { position: relative; display: grid; grid-template-columns: repeat(var(--soko-columns),minmax(0,1fr)); gap: 4px; }
+.soko-cell { position: relative; min-width: 0; aspect-ratio: 1; border-radius: 4px; display: grid; place-items: center; overflow: hidden; }
+.soko-floor { border: 1px solid color-mix(in srgb,var(--line) 55%,transparent); background: color-mix(in srgb,var(--card) 80%,#526e80); box-shadow: inset 0 2px 4px #14203410; }
+.soko-wall { border: 1px solid #506878; border-bottom-width: 3px; background: linear-gradient(145deg,#8297a3,#617e91 65%,#4c6a7d); box-shadow: inset 0 1px 0 #bdd0d077,0 2px 0 #22394c55; }
+.soko-wall::after { content: ''; position: absolute; left: 15%; right: 15%; top: 20%; height: 1px; background: #d6e9e933; }
+.target-ring { width: 52%; height: 52%; border-radius: 50%; border: 2px solid var(--teal); background: color-mix(in srgb,var(--teal-soft) 60%,transparent); box-shadow: 0 0 9px color-mix(in srgb,var(--teal) 18%,transparent); }
+.target-ring::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--teal); top: calc(50% - 2px); left: calc(50% - 2px); }
+.soko-actors { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--soko-columns),minmax(0,1fr)); grid-template-rows: repeat(var(--soko-rows),minmax(0,1fr)); gap: 4px; pointer-events: none; }
+.soko-crate { position: relative; width: 89%; height: 89%; align-self: center; justify-self: center; z-index: 2; border: 2px solid #d1a05a; border-bottom-width: 4px; border-radius: 5px; background: repeating-linear-gradient(0deg,#edbf76 0 5px,#efc681 5px 7px); box-shadow: inset 0 1px 0 #fff0b688,0 2px 3px #14203444; }
+.soko-crate::before,.soko-crate::after { content: ''; position: absolute; inset: 15%; background: linear-gradient(45deg,transparent 42%,#ab763a77 43% 53%,transparent 54%); }
+.soko-crate::after { transform: scaleX(-1); }
+.soko-crate.on-target { border-color: #62b695; background: repeating-linear-gradient(0deg,#b7e7bc 0 5px,#c9ebc2 5px 7px); box-shadow: inset 0 1px 0 #eeffd288,0 0 10px #8dd7ae66,0 2px 3px #14203444; }
+.soko-crate.on-target::before,.soko-crate.on-target::after { opacity: .35; }
+.soko-crate.on-target svg { position: absolute; inset: 20%; width: 60%; height: 60%; z-index: 1; color: #29755d; stroke-width: 3; }
+.soko-crate.stuck { outline: 2px solid var(--error); outline-offset: 1px; }
+.soko-player { position: relative; width: 80%; height: 80%; align-self: center; justify-self: center; z-index: 3; border-radius: 50%; border: 1px solid #b9f4d577; border-bottom-width: 3px; background: radial-gradient(ellipse at 30% 20%,#c4f9d9,#74d0b3 65%,#49a48e); box-shadow: inset 0 1px 0 #edffdb88,0 2px 4px #14203444; }
+.soko-face { position: absolute; top: 33%; left: 21%; right: 21%; height: 25%; display: flex; justify-content: space-between; }
+.soko-face b { width: 23%; height: 75%; border-radius: 50%; background: #226251; }
+.soko-step { position: absolute; bottom: 18%; left: 37%; width: 26%; height: 8%; border-radius: 0 0 5px 5px; border-bottom: 1px solid #22625188; }
+#soko-feedback[data-tone='error'] { color: var(--error); }
+.sokoban-game .board-overlay .button { margin-top: 7px; }
+.sokoban-board { isolation: isolate; }
+.sokoban-game .board-wrap:has(#soko-overlay:not([hidden])) { min-height: 280px; }
+:root.dark .soko-wall { background: linear-gradient(145deg,#637687,#435e74 65%,#354e64); border-color: #4d6577; }
+@media (prefers-color-scheme:dark) { :root:not(.light) .soko-wall { background: linear-gradient(145deg,#637687,#435e74 65%,#354e64); border-color: #4d6577; } }
+@media (max-width:300px) {
+  .soko-stats { gap: 5px; }
+  .soko-stats .stat { padding: 8px 6px; }
+  .soko-stats .stat-label { font-size: 6px; letter-spacing: 1px; }
+  .soko-stats .stat-value { font-size: 20px; }
+  .sokoban-board { padding: 7px; border-radius: 11px; }
+  .soko-ground,.soko-actors { gap: 3px; }
+  .soko-wall { border-bottom-width: 2px; border-radius: 3px; }
+  .soko-crate { border-width: 1px; border-bottom-width: 2px; border-radius: 3px; }
+  .target-ring { border-width: 1px; }
+  .sokoban-level-nav select { padding: 7px 5px; font-size: 9px; }
+}

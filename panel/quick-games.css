@@ -1,0 +1,108 @@
+/* The library keeps the same artwork in either density. */
+.brand-copy { min-width: 0; }
+.brand-description { white-space: nowrap; }
+.library-caption { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 10px; color: var(--quiet); }
+.library-caption span:first-child { font-weight: 650; color: var(--fg); }
+#app[data-library-view='compact'] .welcome { padding: 18px 0 17px; }
+#app[data-library-view='compact'] .welcome .eyebrow,
+#app[data-library-view='compact'] .hero-orbit,
+#app[data-library-view='compact'] .welcome h1 br { display: none; }
+#app[data-library-view='compact'] .welcome h1 { font-size: 23px; line-height: 1.2; letter-spacing: -.8px; margin: 0 0 5px; }
+#app[data-library-view='compact'] .game-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+#app[data-library-view='compact'] .game-card { border-radius: 11px; display: flex; flex-direction: column; }
+#app[data-library-view='compact'] .card-preview { height: 66px; flex-shrink: 0; }
+#app[data-library-view='compact'] .card-kicker,
+#app[data-library-view='compact'] .art-spark,
+#app[data-library-view='compact'] .card-description,
+#app[data-library-view='compact'] .card-arrow,
+#app[data-library-view='compact'] .card-meta > span:first-child { display: none; }
+#app[data-library-view='compact'] .card-info { padding: 9px 10px; flex: 1; display: flex; flex-direction: column; }
+#app[data-library-view='compact'] .card-title-line { margin-bottom: 3px; }
+#app[data-library-view='compact'] .card-title { font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
+#app[data-library-view='compact'] .card-meta { margin-top: auto; padding-top: 3px; font-size: 9px; }
+#app[data-library-view='compact'] .preview-tiles { transform: rotate(-8deg) scale(.57); margin: 0; flex-shrink: 0; }
+#app[data-library-view='compact'] .preview-grid { transform: rotate(9deg) scale(.61); margin: 0; flex-shrink: 0; }
+#app[data-library-view='compact'] .mini-checkers,
+#app[data-library-view='compact'] .mini-mines { transform: rotate(-10deg) scale(.6); margin: 0; flex-shrink: 0; }
+#app[data-library-view='compact'] .mini-stack { transform: rotate(-7deg) scale(.67); margin: 0; flex-shrink: 0; }
+#app[data-library-view='compact'] .mini-memory { transform: rotate(-7deg) scale(.64); margin: 0; flex-shrink: 0; }
+#app[data-library-view='compact'] .mini-lights { transform: rotate(8deg) scale(.64); margin: 0; flex-shrink: 0; }
+
+.preview-minesweeper { background: radial-gradient(ellipse at 80% 100%, #54c4c077, transparent 70%), linear-gradient(135deg, #183c54, #256783); }
+.preview-lights { background: radial-gradient(ellipse at 65% 100%, #eec26288, transparent 65%), linear-gradient(135deg, #302841, #62405b); }
+.preview-minesweeper .card-kicker { color: #c4f8ef; }
+.preview-lights .card-kicker { color: #ffebc3; }
+.mini-mines { display: grid; grid-template-columns: repeat(4, 1fr); width: 103px; gap: 3px; padding: 5px; margin-top: 16px; transform: rotate(-10deg); border-radius: 9px; background: #12374e; box-shadow: 0 5px 0 #102b3b66, 0 12px 22px #071e3444; }
+.mini-mines span { height: 21px; display: grid; place-items: center; font-size: 12px; font-weight: 750; border-radius: 3px; color: #146574; background: #d4ece7; }
+.mini-mines .mini-covered { background: linear-gradient(145deg, #69bab7, #3c929c); box-shadow: inset 0 1px 0 #ffffff55, 0 2px 0 #102b3b55; }
+.mini-mines .mini-flag { background: #376777; color: #ffc891; }
+.mini-mines svg { width: 13px; height: 13px; }
+.mini-lights { display: grid; grid-template-columns: repeat(3, 1fr); width: 93px; gap: 5px; padding: 7px; margin-top: 16px; transform: rotate(8deg); background: #27283e; border-radius: 12px; box-shadow: 0 5px 0 #17142766, 0 12px 22px #17142744; }
+.mini-lights span { height: 23px; border: 1px solid #77738a44; background: #34364c; border-radius: 5px; }
+.mini-lights span.on { background: linear-gradient(145deg, #fff4b9, #f3bc6b); border-color: #ffefa6; box-shadow: 0 0 12px #ffc96855, inset 0 1px 0 #ffffff99; }
+
+.quick-game .game-heading h1 { font-size: clamp(21px, 7vw, 26px); }
+.quick-options { display: flex; align-items: center; gap: 8px; justify-content: space-between; margin-bottom: 13px; }
+.quick-options select { min-width: 0; max-width: 65%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--fg); font-size: 10px; }
+.quick-difficulty-note { font-size: 9px; text-align: right; color: var(--quiet); line-height: 1.4; }
+.quick-tools { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
+.quick-feedback { min-height: 34px; font-size: 10px; line-height: 1.6; text-align: center; color: var(--quiet); margin-top: 12px; }
+.quick-best { text-align: center; color: var(--teal); font-size: 9px; line-height: 1.5; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.mine-input-mode { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); background: var(--muted); border-radius: 10px; }
+.mine-input-mode .button { border-color: transparent; background: transparent; min-width: 74px; }
+.mine-input-mode .button[aria-pressed='true'] { background: var(--card); color: var(--teal); border-color: var(--line); box-shadow: 0 2px 4px #00000008; }
+.mines-board, .lights-board { display: grid; grid-template-columns: repeat(var(--grid-size), minmax(0, 1fr)); aspect-ratio: 1; gap: 4px; padding: 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--muted); }
+.mine-cell { min-width: 0; position: relative; display: grid; place-items: center; padding: 0; border: 1px solid color-mix(in srgb, var(--teal) 25%, var(--line)); border-bottom-width: 3px; border-radius: 5px; color: var(--teal); font-size: clamp(11px, 4vw, 17px); font-weight: 750; background: linear-gradient(145deg, color-mix(in srgb, var(--teal-soft) 65%, var(--card)), var(--teal-soft)); box-shadow: inset 0 1px 0 #ffffff25; transition: background .15s, border-color .15s, transform .15s; }
+.mine-cell:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.mine-cell.revealed { border: 1px solid color-mix(in srgb, var(--line) 65%, transparent); background: color-mix(in srgb, var(--card) 70%, var(--muted)); box-shadow: none; }
+.mine-cell.revealed:hover { transform: none; filter: none; }
+.mine-cell[data-count='2'] { color: var(--purple); }
+.mine-cell[data-count='3'], .mine-cell[data-count='6'] { color: var(--warm); }
+.mine-cell[data-count='4'], .mine-cell[data-count='7'], .mine-cell[data-count='8'] { color: var(--error); }
+.mine-cell[data-count='5'] { color: var(--fg); }
+.mine-cell.flagged { color: var(--warm); background: var(--warm-soft); border-color: color-mix(in srgb, var(--warm) 35%, var(--line)); }
+.mine-cell.mine { color: var(--quiet); background: var(--card); }
+.mine-cell.exploded, .mine-cell.wrong-flag { color: var(--error); background: var(--error-soft); border-color: var(--error); }
+.mine-cell svg { width: 55%; height: 55%; max-width: 19px; max-height: 19px; }
+.flag-mode .mine-cell:not(.revealed):hover { border-color: var(--warm); }
+.mine-reveal { animation: mine-reveal .22s ease-out var(--reveal-delay, 0ms) backwards; }
+@keyframes mine-reveal { from { opacity: .45; transform: scale(.88); } to { opacity: 1; transform: scale(1); } }
+.lights-board { background: radial-gradient(ellipse at 50% 0%, #343c50, #1b2433); border-color: #64708455; padding: 12px; gap: 8px; box-shadow: inset 0 1px 0 #ffffff12, 0 6px 16px #14203418; }
+.light-cell { position: relative; min-width: 0; padding: 0; display: grid; place-items: center; border: 1px solid #64708455; border-bottom-width: 3px; border-radius: 9px; background: linear-gradient(145deg, #364055, #242f41); box-shadow: inset 0 1px 0 #ffffff0a, 0 2px 3px #00000022; transition: background .18s, box-shadow .18s, border-color .18s; }
+.light-lens { position: absolute; inset: 12%; border-radius: 6px; background: radial-gradient(ellipse at 35% 20%, #465268, #283345); border: 1px solid #64708444; box-shadow: inset 0 2px 4px #00000020; transition: background .2s, box-shadow .2s, border-color .2s; }
+.light-lens i { position: absolute; width: 20%; height: 5%; top: 16%; left: 16%; border-radius: 5px; background: #ffffff14; }
+.light-coordinate { position: relative; z-index: 1; color: #a3b0c7; font-size: 8px; font-weight: 650; pointer-events: none; }
+.light-cell.on { border-color: #e7b66e; background: linear-gradient(145deg, #f6ca85, #c98e4d); box-shadow: 0 0 15px #ffcc7333, 0 2px 3px #00000022; }
+.light-cell.on .light-lens { background: radial-gradient(ellipse at 30% 20%, #fff9d6, #ffdb8b 65%, #f3b75e); border-color: #fff0b5; box-shadow: inset 0 1px 0 #ffffffcc, 0 0 15px #ffd37944; }
+.light-cell.on .light-lens i { background: #ffffffb0; }
+.light-cell.on .light-coordinate { color: #715025; }
+.light-cell:hover .light-lens { border-color: #d6e3ef; }
+.light-cell.hinted { outline: 2px solid var(--teal); outline-offset: 2px; }
+.light-cell.hinted::after { content: ''; position: absolute; width: 5px; height: 5px; right: -2px; top: -2px; background: var(--teal); border: 2px solid var(--bg); border-radius: 50%; }
+.light-changed .light-lens { animation: light-pulse .2s ease-out; }
+@keyframes light-pulse { 50% { transform: scale(.91); } }
+@media (max-width: 300px) {
+  .brand { gap: 5px; }
+  .brand-description { display: none; }
+  .save-indicator { margin-left: auto; }
+  .save-indicator span:last-child { display: none; }
+  #app[data-library-view='compact'] .welcome h1 { font-size: 20px; }
+  #app[data-library-view='compact'] .card-preview { height: 57px; }
+  #app[data-library-view='compact'] .card-info { padding: 8px; }
+  #app[data-library-view='compact'] .card-title { font-size: 11px; }
+  #app[data-library-view='compact'] .preview-tiles { transform: rotate(-8deg) scale(.53); }
+  .quick-game .game-heading h1 { font-size: 20px; letter-spacing: -.7px; }
+  .quick-options select { padding: 6px; font-size: 9px; }
+  .quick-difficulty-note { font-size: 8px; }
+  .mines-board { padding: 6px; gap: 3px; border-radius: 10px; }
+  .mine-cell { border-radius: 3px; border-bottom-width: 2px; font-size: 11px; }
+  .mines-board[style*='10'] { gap: 2px; padding: 5px; }
+  .lights-board { padding: 8px; gap: 6px; }
+  .light-cell { border-radius: 6px; }
+  .light-lens { border-radius: 4px; }
+  .light-coordinate { font-size: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mine-cell, .light-cell, .light-lens { transition: none; }
+  .light-changed .light-lens, .mine-reveal { animation: none; }
+}

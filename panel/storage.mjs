@@ -1,5 +1,5 @@
 export const SAVE_KEY = 'sidequest.v1';
-export const emptySave = () => ({ version: 1, updatedAt: 0, activeGame: null, games: { '2048': null, sudoku: null, checkers: null, blocks: null, memory: null }, preferences: { sound: false, numberFirst: false } });
+export const emptySave = () => ({ version: 1, updatedAt: 0, activeGame: null, games: { '2048': null, sudoku: null, checkers: null, blocks: null, memory: null, minesweeper: null, lights: null, nonograms: null, codebreaker: null, sliding: null, connect: null, sokoban: null }, preferences: { sound: false, numberFirst: false, libraryView: 'compact' } });
 
 export function normalizeSave(value, validators) {
   const save = emptySave();
@@ -9,6 +9,7 @@ export function normalizeSave(value, validators) {
   save.activeGame = Object.keys(save.games).includes(value.activeGame) ? value.activeGame : null;
   save.preferences.sound = value.preferences?.sound === true;
   save.preferences.numberFirst = value.preferences?.numberFirst === true;
+  save.preferences.libraryView = value.preferences?.libraryView === 'expanded' ? 'expanded' : 'compact';
   for (const game of Object.keys(save.games)) {
     if (value.games[game] == null) continue;
     if (validators[game]?.(value.games[game])) save.games[game] = value.games[game];

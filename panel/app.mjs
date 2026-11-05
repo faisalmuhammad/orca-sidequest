@@ -6,6 +6,13 @@ import { EXTRA_NAMES, EXTRA_CREATORS, extraCards, createExtraGames } from './ext
 import { createCheckers, isValidCheckers } from './games/checkers.mjs';
 import { isValidBlocks } from './games/blocks.mjs';
 import { isValidMemory } from './games/memory.mjs';
+import { isValidMinesweeper } from './games/minesweeper.mjs';
+import { isValidLights } from './games/lights.mjs';
+import { isValidNonogram } from './games/nonograms.mjs';
+import { isValidCodebreaker } from './games/codebreaker.mjs';
+import { isValidSliding } from './games/sliding.mjs';
+import { isValidConnect } from './games/connect.mjs';
+import { isValidSokoban, isSokobanComplete } from './games/sokoban.mjs';
 
 const app = document.getElementById('app');
 const announcer = document.getElementById('announcer');
@@ -36,6 +43,11 @@ const paths = {
   leaf: '<path d="M20 4C7 2 2 8 5 15c4 7 16 4 15-11ZM4 21 16 9"/>',
   moon: '<path d="M20 15a9 9 0 0 1-11-11 9 9 0 1 0 11 11Z"/>',
   bolt: '<path d="m13 2-9 12h7l-1 8 10-13h-7V2Z"/>',
+  flag: '<path d="M5 21V4m0 0c4-4 9 4 14 0v9c-5 4-10-4-14 0"/>',
+  mine: '<circle cx="12" cy="12" r="5"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/><circle cx="10" cy="10" r="1"/>',
+  close: '<path d="m6 6 12 12M6 18 18 6"/>',
+  compact: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  expanded: '<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/>',
 };
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
 const format = value => value.toLocaleString();
@@ -93,7 +105,8 @@ function updateTimer() {
 function persist() { if (!initialized) return; checkpointClock(); void store.save(save); }
 
 function brand() {
-  return `<header class="brand"><div class="brand-mark">${icon('game')}</div><div><div class="brand-name">Sidequest<span class="brand-period">.</span></div><div class="brand-description">Small games. Good breaks.</div></div><div id="save-indicator" class="save-indicator" data-status="${saveStatus}"><span class="save-dot" aria-hidden="true"></span><span>Saved</span></div><button class="sound-button" id="sound-button" data-action="sound" aria-label="Turn sound ${save.preferences.sound ? 'off' : 'on'}" title="Turn sound ${save.preferences.sound ? 'off' : 'on'}" aria-pressed="${save.preferences.sound}">${icon(save.preferences.sound ? 'sound' : 'muted')}</button></header>`;
+  const compact = save.preferences.libraryView === 'compact';
+  return `<header class="brand"><div class="brand-mark">${icon('game')}</div><div class="brand-copy"><div class="brand-name">Sidequest<span class="brand-period">.</span></div><div class="brand-description">Small games. Good breaks.</div></div><div id="save-indicator" class="save-indicator" data-status="${saveStatus}"><span class="save-dot" aria-hidden="true"></span><span>Saved</span></div>${save.activeGame ? '' : `<button type="button" class="sound-button view-button" data-action="library-view" aria-label="Compact game view" aria-pressed="${compact}" aria-controls="game-library" title="Switch to ${compact ? 'expanded' : 'compact'} view">${icon(compact ? 'compact' : 'expanded')}</button>`}<button class="sound-button" id="sound-button" data-action="sound" aria-label="Turn sound ${save.preferences.sound ? 'off' : 'on'}" title="Turn sound ${save.preferences.sound ? 'off' : 'on'}" aria-pressed="${save.preferences.sound}">${icon(save.preferences.sound ? 'sound' : 'muted')}</button></header>`;
 }
 
 function renderHome() {
@@ -101,8 +114,8 @@ function renderHome() {
   const progress = sudoku ? `${sudoku.values.filter(Boolean).length}/81 filled · ${duration(sudoku.elapsedMs)}` : 'Notes, hints & three difficulties';
   const blocksAction = blocks?.moves ? 'Resume game' : 'Play 2048';
   const sudokuAction = sudoku ? (isSudokuComplete(sudoku) ? 'Puzzle completed' : 'Resume puzzle') : 'Play Sudoku';
-  return `<section class="welcome"><span class="eyebrow"><i class="live-spark"></i> BETWEEN TASKS</span><h1>Your next<br><span>quick break.</span></h1><p>Quick games, right where you work.</p><div class="hero-orbit" aria-hidden="true">${icon('spark')}</div></section>
-    <div class="game-list">
+  return `<section class="welcome"><span class="eyebrow"><i class="live-spark"></i> BETWEEN TASKS</span><h1>Your next <br><span>quick break.</span></h1><p>Quick games, right where you work.</p><div class="hero-orbit" aria-hidden="true">${icon('spark')}</div></section>
+    <div class="library-caption"><span>Your games</span><span>${2 + Object.keys(EXTRA_NAMES).length} to explore</span></div><div class="game-list" id="game-library">
       <button class="game-card" data-game="2048" aria-label="${blocksAction}"><div class="card-preview preview-2048" aria-hidden="true"><span class="card-kicker">01 / MERGE & MULTIPLY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-tiles">${[8,32,128,256].map(value => `<span class="preview-tile">${value}<i></i></span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">2048</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Find your flow. Chase the next merge.</p><div class="card-meta"><span>${blocks ? `Best ${format(blocks.best)}` : 'Strategy meets serendipity'}</span><span class="card-state">${blocks?.moves ? 'Resume' : 'Play'}${icon('play')}</span></div></div></button>
       <button class="game-card" data-game="sudoku" aria-label="${sudokuAction}"><div class="card-preview preview-sudoku" aria-hidden="true"><span class="card-kicker">02 / A LITTLE CLARITY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-grid">${[5,0,3,0,7,0,2,0,9].map(value => `<span>${value || '<i></i>'}</span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">Sudoku</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Clear the grid, one number at a time.</p><div class="card-meta"><span>${progress}</span><span class="card-state">${sudoku ? (isSudokuComplete(sudoku) ? 'Done' : 'Resume') : 'Play'}${icon('play')}</span></div></div></button>
     ${extraCards(save.games, icon)}</div><p class="home-footer">${icon('game')} Refresh your mind with a quick game while your agents work.</p>`;
@@ -253,6 +266,7 @@ function render(focus = false) {
   cancelMotion();
   extras.dispose();
   app.dataset.game = save.activeGame ?? 'home';
+  app.dataset.libraryView = save.preferences.libraryView;
   app.innerHTML = brand() + (save.activeGame === '2048' ? render2048() : save.activeGame === 'sudoku' ? renderSudoku() : EXTRA_NAMES[save.activeGame] ? gameNav() + extras.render(save.activeGame) : renderHome());
   setupGameControls();
   app.setAttribute('aria-busy', 'false');
@@ -308,17 +322,17 @@ function enterNumber(value) {
 }
 function confirmNew(game, difficulty) {
   const state = save.games[game];
-  const hasProgress = game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : state.attempts > 0 || state.phase === 'play';
+  const hasProgress = game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : game === 'minesweeper' ? state.started || state.flags.some(Boolean) : ['lights','nonograms','sliding','connect','sokoban'].includes(game) ? state.moves > 0 : game === 'codebreaker' ? state.guesses.length > 0 || state.draft.some(n => n !== null) : state.attempts > 0 || state.phase === 'play';
   const start = () => {
     clockStart = null;
     extras.dispose();
-    save.games[game] = game === '2048' ? create2048(state.best) : game === 'sudoku' ? createSudoku(difficulty ?? state.difficulty) : game === 'checkers' ? createCheckers(difficulty ?? state.mode) : EXTRA_CREATORS[game](state);
+    save.games[game] = game === '2048' ? create2048(state.best) : game === 'sudoku' ? createSudoku(difficulty ?? state.difficulty) : game === 'checkers' ? createCheckers(difficulty ?? state.mode) : EXTRA_CREATORS[game](state, difficulty);
     selected = game === 'sudoku' ? save.games.sudoku.values.findIndex(value => !value) : 0;
     pencil = false; checked = false; message = ''; messageTone = ''; persist(); render(true);
   };
-  if (!hasProgress || (game === '2048' ? is2048Over(state.board) : game === 'sudoku' ? isSudokuComplete(state) : state.result || state.over || state.phase === 'complete')) { start(); return; }
-  document.getElementById('confirm-title').textContent = 'Start a new game?';
-  document.getElementById('confirm-description').textContent = 'Your current game will be replaced. Your personal best stays.';
+  if (!hasProgress || (game === '2048' ? is2048Over(state.board) : game === 'sudoku' ? isSudokuComplete(state) : state.result || state.over || state.phase === 'complete' || (game === 'lights' && state.board.every(n => n === 0)) || (game === 'nonograms' && state.cells.every((n,i) => (n === 1 ? 1 : 0) === state.solution[i])) || (game === 'sliding' && state.board.every((n,i) => n === (i+1) % state.board.length)) || (game === 'sokoban' && isSokobanComplete(state)))) { start(); return; }
+  document.getElementById('confirm-title').textContent = game === 'sokoban' ? Number.isInteger(difficulty) && difficulty !== state.level ? 'Switch levels?' : 'Restart this level?' : 'Start a new game?';
+  document.getElementById('confirm-description').textContent = game === 'sokoban' ? 'Your moves in this level will be reset. Completed levels and records stay saved.' : 'Your current game will be replaced. Your personal best stays.';
   if (game === 'checkers') document.getElementById('checkers-mode').value = state.mode;
   extras.suspend();
   confirmation = start; dialog.returnValue = ''; dialog.showModal(); syncClock();
@@ -344,6 +358,10 @@ app.addEventListener('click', event => {
     target.setAttribute('aria-label', `Turn sound ${save.preferences.sound ? 'off' : 'on'}`);
     target.title = `Turn sound ${save.preferences.sound ? 'off' : 'on'}`; target.setAttribute('aria-pressed', String(save.preferences.sound));
     void sound.play('complete');
+  } else if (action === 'library-view') {
+    save.preferences.libraryView = save.preferences.libraryView === 'compact' ? 'expanded' : 'compact';
+    persist(); render(); document.querySelector('[data-action="library-view"]')?.focus({ preventScroll: true });
+    announce(`${save.preferences.libraryView === 'compact' ? 'Compact' : 'Expanded'} game view selected.`);
   } else if (action === 'home') switchGame(null);
   else if (action === 'new-2048') confirmNew('2048');
   else if (action === 'undo-2048') { cancelMotion(); save.games['2048'] = undo2048(save.games['2048']); persist(); update2048(); focusBoard(); announce('Last move undone.'); }
@@ -420,12 +438,12 @@ setInterval(() => {
 }, 1000);
 
 try {
-  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory });
+  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory, minesweeper:isValidMinesweeper, lights:isValidLights, nonograms:isValidNonogram, codebreaker:isValidCodebreaker, sliding:isValidSliding, connect:isValidConnect, sokoban:isValidSokoban });
   save = restored.save; initialized = true;
   if (save.activeGame === 'sudoku') selected = Math.max(0, save.games.sudoku.values.findIndex(value => !value));
   render();
   if (restored.recovered.length) {
-    announce('Some saved game data could not be restored. Your other game is still available.');
+    announce('Some saved game data could not be restored. Your other games are still available.');
     save.activeGame = null; render();
   }
 } catch (error) {

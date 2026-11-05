@@ -9,14 +9,21 @@ import { createSudoku } from '../panel/games/sudoku.mjs';
 import { createCheckers } from '../panel/games/checkers.mjs';
 import { createBlocks } from '../panel/games/blocks.mjs';
 import { createMemory } from '../panel/games/memory.mjs';
+import { createMinesweeper, revealMine, isValidMinesweeper } from '../panel/games/minesweeper.mjs';
+import { createLights, solveLights, isValidLights } from '../panel/games/lights.mjs';
+import { createNonogram, isValidNonogram } from '../panel/games/nonograms.mjs';
+import { createCodebreaker, isValidCodebreaker } from '../panel/games/codebreaker.mjs';
+import { createSliding, isValidSliding } from '../panel/games/sliding.mjs';
+import { createConnect, dropConnect, isValidConnect } from '../panel/games/connect.mjs';
 import { emptySave, SAVE_KEY } from '../panel/storage.mjs';
+import { runSokobanSmoke } from './browser-sokoban.mjs';
 
 const run = promisify(execFile);
 const cli = process.env.ORCA_CLI_COMMAND ?? 'orca';
 const url = 'http://127.0.0.1:4318/';
 const output = fileURLToPath(new URL('../.orca/shots/', import.meta.url));
 await mkdir(output, { recursive: true });
-let page = process.argv[2];
+let page = process.argv.slice(2).find(arg => !arg.startsWith('--'));
 let width = 320;
 async function command(...args) {
   const { stdout } = await run(cli, [...args, '--json'], { maxBuffer: 2 ** 20, timeout: 60000 });
@@ -53,7 +60,7 @@ async function seed(value) {
   await evaluate(`(() => { const put = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { return put.call(this, key, key === ${JSON.stringify(SAVE_KEY)} ? ${JSON.stringify(JSON.stringify(value))} : value); }; localStorage.setItem(${JSON.stringify(SAVE_KEY)}, ${JSON.stringify(JSON.stringify(value))}); return true; })()`);
   await reload();
   await act('wait','--selector','#app[aria-busy="false"]');
-  if (value.activeGame) assert.equal(await evaluate(`!!document.getElementById(${JSON.stringify({ '2048':'board-2048', sudoku:'sudoku-board', checkers:'checkers-board', blocks:'blocks-board', memory:'memory-board' }[value.activeGame])})`), true, JSON.stringify(await evaluate(`({ save: JSON.parse(localStorage.getItem(${JSON.stringify(SAVE_KEY)})), text: document.body.innerText })`)));
+  if (value.activeGame) assert.equal(await evaluate(`!!document.getElementById(${JSON.stringify({ '2048':'board-2048', sudoku:'sudoku-board', checkers:'checkers-board', blocks:'blocks-board', memory:'memory-board', minesweeper:'quick-board', lights:'quick-board',nonograms:'nonogram-board',codebreaker:'code-draft',sliding:'sliding-board',connect:'connect-board',sokoban:'sokoban-board' }[value.activeGame])})`), true, JSON.stringify(await evaluate(`({ save: JSON.parse(localStorage.getItem(${JSON.stringify(SAVE_KEY)})), text: document.body.innerText })`)));
 }
 async function reload() {
   await act('reload');
@@ -76,10 +83,24 @@ async function screenshot(name) {
 }
 
 await act('goto','--url',url);
+if (!process.argv.includes('--more')) {
 if (!process.argv.includes('--extras')) {
 await seed(emptySave());
 await layout('game picker');
 await screenshot('picker-preview');
+assert.equal(await evaluate(`document.querySelectorAll('.game-card').length`),12);
+assert.equal(await evaluate(`document.querySelector('[data-action="library-view"]').nextElementSibling.id`),'sound-button');
+assert.equal(await evaluate(`getComputedStyle(document.getElementById('game-library')).gridTemplateColumns.split(' ').length`),2);
+const compactHeight=await evaluate(`document.getElementById('game-library').getBoundingClientRect().height`);
+await click('Compact game view');
+assert.equal((await readSave()).preferences.libraryView,'expanded');
+assert.ok(await evaluate(`document.getElementById('game-library').getBoundingClientRect().height`) > compactHeight * 2);
+await reload(); await act('wait','--selector','#game-library');
+assert.equal(await evaluate(`document.getElementById('app').dataset.libraryView`),'expanded');
+await screenshot('picker-expanded-preview');
+await click('Compact game view');
+assert.equal((await readSave()).preferences.libraryView,'compact');
+console.log('Passed: header view toggle, twelve cards, compact density and saved expanded preference');
 
 const blocks = { ...create2048(), board: [2,2,...Array(14).fill(0)] };
 await seed({ ...emptySave(), activeGame: '2048', games: { '2048': blocks, sudoku: null } });
@@ -247,9 +268,148 @@ assert.equal((await readSave()).games.memory.attempts,1);
 await layout('Memory');await screenshot('memory-preview');
 console.log('Passed: study phase, card matching and progress');
 
-for(const id of ['2048','sudoku','checkers','blocks','memory']) {
+await seed({...emptySave(),activeGame:'minesweeper',games:{...emptySave().games,minesweeper:createMinesweeper()}});
+await evaluate(`(() => { document.querySelector('[data-quick-cell="0"]').focus(); return true; })()`);
+await key('ArrowRight'); await key('Enter');
+const firstReveal=(await readSave()).games.minesweeper;
+assert.equal(firstReveal.started,true); assert.equal(firstReveal.revealed[1],true); assert.notEqual(firstReveal.result,'lost');
+assert.ok(isValidMinesweeper(firstReveal));
+const flagIndex=firstReveal.revealed.findIndex(n=>!n);
+const flagLabel='Row '+(Math.floor(flagIndex/8)+1)+', column '+(flagIndex%8+1)+': covered';
+await click('Flag'); await click(flagLabel);
+assert.equal((await readSave()).games.minesweeper.flags[flagIndex],true);
+await key('f'); assert.equal((await readSave()).games.minesweeper.flags[flagIndex],false);
+await click('Reveal'); await click('New'); await click('Keep playing');
+assert.equal((await readSave()).games.minesweeper.started,true);
+await layout('Minesweeper'); await screenshot('minesweeper-preview');
+await reload(); await act('wait','--selector','#quick-board');
+assert.deepEqual((await readSave()).games.minesweeper.mines,firstReveal.mines);
+await select('Minesweeper difficulty','quick'); await click('Start new');
+assert.equal((await readSave()).games.minesweeper.size,6);
+const mineWin=revealMine(createMinesweeper(null,'quick'),0,()=>.5);
+for(let i=0;i<mineWin.mines.length;i++) if(!mineWin.mines[i]) mineWin.revealed[i]=true;
+const lastSafe=mineWin.mines.findIndex(n=>!n); mineWin.revealed[lastSafe]=false; mineWin.elapsedMs=5000;
+await seed({...emptySave(),activeGame:'minesweeper',games:{...emptySave().games,minesweeper:mineWin}});
+await click('Row '+(Math.floor(lastSafe/6)+1)+', column '+(lastSafe%6+1)+': covered');
+assert.equal((await readSave()).games.minesweeper.result,'won');
+assert.match(await evaluate(`document.getElementById('quick-overlay').textContent`),/A clear path/);
+await click('Play again');
+assert.equal((await readSave()).games.minesweeper.started,false);
+console.log('Passed: Minesweeper safe reveal, keyboard flags, confirmation, difficulty, win and save recovery');
+
+const lights=createLights(null,'classic',()=>.5);
+await seed({...emptySave(),activeGame:'lights',games:{...emptySave().games,lights}});
+await click('Hint');
+assert.equal(await evaluate(`document.querySelectorAll('.light-cell.hinted').length`),1);
+await key('Enter');
+assert.equal((await readSave()).games.lights.moves,1);
+assert.ok(isValidLights((await readSave()).games.lights));
+await click('Undo'); assert.deepEqual((await readSave()).games.lights.board,lights.board);
+await layout('Lights Out'); await screenshot('lights-preview');
+const solution=solveLights(lights.board,lights.size);
+for(const i of solution) {
+  const s=(await readSave()).games.lights;
+  await click('Row '+(Math.floor(i/5)+1)+', column '+(i%5+1)+': '+(s.board[i]?'on':'off'));
+}
+assert.ok((await readSave()).games.lights.board.every(n=>n===0));
+assert.match(await evaluate(`document.getElementById('quick-overlay').textContent`),/A moment of clarity/);
+await click('Undo'); assert.equal((await readSave()).games.lights.moves,solution.length-1);
+await reload(); await act('wait','--selector','#quick-board');
+assert.equal((await readSave()).games.lights.moves,solution.length-1);
+await select('Lights Out difficulty','quick'); await click('Keep playing');
+assert.equal((await readSave()).games.lights.size,5);
+await select('Lights Out difficulty','quick'); await click('Start new');
+assert.equal((await readSave()).games.lights.size,4);
+console.log('Passed: Lights Out hints, keyboard toggles, undo, completion, difficulty and save recovery');
+}
+
+const nonogram=createNonogram(null,'quick',()=>0);
+await seed({...emptySave(),activeGame:'nonograms',games:{...emptySave().games,nonograms:nonogram}});
+await click('Cross');await click('Row 1, column 1: unknown');
+assert.equal((await readSave()).games.nonograms.cells[0],-1);
+await key('x');assert.equal((await readSave()).games.nonograms.cells[0],0);
+await click('Fill');await key('ArrowRight');await key('Enter');
+assert.equal((await readSave()).games.nonograms.cells[1],1);
+await click('Undo');assert.equal((await readSave()).games.nonograms.cells[1],0);
+await layout('Nonograms');await screenshot('nonograms-preview');
+const nonogramBaseMoves=(await readSave()).games.nonograms.moves;
+for(let i=0;i<nonogram.solution.length;i++)if(nonogram.solution[i])await click('Row '+(Math.floor(i/5)+1)+', column '+(i%5+1)+': unknown');
+assert.ok(isValidNonogram((await readSave()).games.nonograms));
+assert.match(await evaluate(`document.getElementById('more-overlay').textContent`),/Picture perfect/);
+await click('Undo');await reload();await act('wait','--selector','#nonogram-board');
+assert.equal((await readSave()).games.nonograms.moves,nonogramBaseMoves+nonogram.solution.filter(Boolean).length-1);
+await select('Nonograms difficulty','classic');await click('Keep playing');
+assert.equal((await readSave()).games.nonograms.size,5);
+await select('Nonograms difficulty','classic');await click('Start new');
+assert.equal((await readSave()).games.nonograms.size,8);
+console.log('Passed: Nonograms fill/cross, keyboard, clues, completion, undo, difficulty and recovery');
+
+const code={...createCodebreaker(),secret:[0,1,2,3]};
+await seed({...emptySave(),activeGame:'codebreaker',games:{...emptySave().games,codebreaker:code}});
+await click('Slot 1: empty');for(const digit of ['1','2','3'])await key(digit);
+await reload();await act('wait','--selector','#code-draft');
+assert.deepEqual((await readSave()).games.codebreaker.draft,[0,1,2,null]);
+await click('Slot 4: empty');await key('1');await click('Check guess');
+assert.equal((await readSave()).games.codebreaker.guesses[0].exact,3);
+assert.equal((await readSave()).games.codebreaker.guesses[0].misplaced,0);
+await layout('Codebreaker');await screenshot('codebreaker-preview');
+for(const digit of ['1','2','3','4'])await key(digit);await click('Check guess');
+assert.equal((await readSave()).games.codebreaker.result,'won');
+assert.ok(isValidCodebreaker((await readSave()).games.codebreaker));
+assert.match(await evaluate(`document.getElementById('more-overlay').textContent`),/Code cracked/);
+await click('Play again');assert.equal((await readSave()).games.codebreaker.guesses.length,0);
+console.log('Passed: Codebreaker keyboard entry, draft recovery, duplicate feedback and completion');
+
+const slideBoard=[1,2,3,4,5,6,0,7,8],slide={...createSliding(),board:slideBoard,initial:slideBoard};
+await seed({...emptySave(),activeGame:'sliding',games:{...emptySave().games,sliding:slide}});
+await evaluate(`(() => { document.getElementById('sliding-board').focus(); return true; })()`);
+await key('ArrowRight');assert.equal((await readSave()).games.sliding.moves,1);
+await layout('Sliding Puzzle');await screenshot('sliding-preview');
+await reload();await act('wait','--selector','#sliding-board');
+assert.deepEqual((await readSave()).games.sliding.board,[1,2,3,4,5,6,7,0,8]);
+await click('Tile 8, row 3, column 3');
+await act('wait','--text','Everything in place.');
+assert.match(await evaluate(`document.getElementById('more-overlay').textContent`),/Everything in place/);
+assert.ok(isValidSliding((await readSave()).games.sliding));await click('Undo');
+assert.equal((await readSave()).games.sliding.moves,1);
+await select('Sliding Puzzle difficulty','classic');await click('Start new');
+assert.equal((await readSave()).games.sliding.size,4);
+console.log('Passed: Sliding Puzzle animated movement, keyboard, win, undo, difficulty and recovery');
+
+let connect=createConnect(null,'local');for(const col of [0,6,1,6,2,5])connect=dropConnect(connect,col);
+await seed({...emptySave(),activeGame:'connect',games:{...emptySave().games,connect}});
+await layout('Connect Four');await screenshot('connect-preview');
+await click('Drop in column 4');
+await act('wait','--text','Coral connects four!');
+assert.match(await evaluate(`document.getElementById('more-overlay').textContent`),/Coral connects four/);
+assert.ok(isValidConnect((await readSave()).games.connect));
+await click('Undo');assert.deepEqual((await readSave()).games.connect.board,connect.board);
+await reload();await act('wait','--selector','#connect-board');
+assert.equal((await readSave()).games.connect.moves,6);
+await select('Connect Four opponent','computer');await click('Start new');
+await click('Drop in column 4');await act('wait','--text','Your turn');
+assert.equal((await readSave()).games.connect.moves,2);
+await click('Undo');assert.equal((await readSave()).games.connect.moves,0);
+console.log('Passed: Connect Four gravity, animated drops, local win, computer response, undo and recovery');
+
+for(const id of ['2048','sudoku','checkers','blocks','memory','minesweeper','lights','nonograms','codebreaker','sliding','connect','sokoban']) {
   width=240;await act('viewport','--width','240','--height','760','--mobile');
-  await select('Switch game',id);await layout('narrow '+id);
+  await select('Switch game',id);
+  if(id==='minesweeper')await select('Minesweeper difficulty','expert');
+  if(id==='nonograms')await select('Nonograms difficulty','classic');
+  if(id==='sliding')await select('Sliding Puzzle difficulty','classic');
+  await layout('narrow '+id);
+}
+for(const theme of ['dark','light']) {
+  await click('All games');
+  await evaluate(`(() => { document.documentElement.className = ${JSON.stringify(theme)}; return true; })()`);
+  await layout('narrow '+theme+' compact library');
+  await screenshot('picker-'+theme+'-narrow-preview');
+  await click('Compact game view'); await layout('narrow '+theme+' expanded library');
+  await click('Compact game view');
+  await click('Play Lights Out');
+  await layout('narrow '+theme+' Lights Out'); await screenshot('lights-'+theme+'-narrow-preview');
+  for(const id of ['nonograms','codebreaker','sliding','connect']){await select('Switch game',id);await layout('narrow '+theme+' '+id);await screenshot(id+'-'+theme+'-narrow-preview');}
 }
 width=320;await act('viewport','--width','320','--height','760','--mobile');
 
@@ -264,5 +424,7 @@ assert.equal((await readSave()).preferences.sound,false);
 assert.equal(await evaluate(`document.querySelectorAll('a').length`),0,'Promotional footer was removed');
 console.log('Passed: audible audio waveform, mute preference and no promotional footer');
 const browserConsole = await act('console','--limit','100');
-await writeFile(`${output}browser-smoke.json`, JSON.stringify({ passed: true, page, browserConsole }, null, 2));
+await writeFile(`${output}browser-smoke.json`, JSON.stringify({ passed: true, suite:process.argv.includes('--more')?'more':'all', page, browserConsole }, null, 2));
 console.log(`All browser checks passed. Screenshots: ${output}`);
+
+await runSokobanSmoke();
