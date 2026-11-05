@@ -1,0 +1,64 @@
+{
+  "manifestVersion": 2,
+  "id": "sidequest",
+  "name": "Sidequest",
+  "version": "0.1.0",
+  "description": "Refresh your mind with quick games while your agents work. One compact sidebar, with saved progress and room for more games.",
+  "license": "MIT",
+  "engines": {
+    "orca": ">=1.4.248"
+  },
+  "execution": "sandboxed-ui",
+  "pluginApi": 1,
+  "contributes": {
+    "panels": [
+      {
+        "id": "sidequest",
+        "title": "Sidequest",
+        "icon": "puzzle",
+        "entry": "panel/index.html"
+      }
+    ],
+    "commands": [
+      {
+        "id": "sidequest.toggle",
+        "title": "Sidequest: Toggle game sidebar",
+        "when": "workspace",
+        "action": "sidebar.right.toggle"
+      }
+    ],
+    "statusBarItems": [
+      {
+        "id": "sidequest",
+        "icon": "puzzle",
+        "tooltip": "Sidequest \u2014 toggle sidebar. Select the puzzle tab to play.",
+        "command": "sidequest.toggle"
+      }
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "storage:own"
+    }
+  ],
+  "repository": "https://github.com/faisalmuhammad/orca-sidequest",
+  "icon": "assets/icon.png",
+  "cover": {
+    "path": "assets/cover.png",
+    "alt": "Sidequest puzzle emblem on a mint tile, with the message: Refresh your mind with a quick game while your agents work."
+  },
+  "screenshots": [
+    {
+      "path": "assets/screenshot-dark.png",
+      "alt": "Sidequest game interfaces in the dark theme.",
+      "caption": "Quick games in one compact sidebar.",
+      "theme": "dark"
+    },
+    {
+      "path": "assets/screenshot-light.png",
+      "alt": "Sidequest game interfaces in the light theme.",
+      "caption": "Quick games in one compact sidebar.",
+      "theme": "light"
+    }
+  ]
+}
