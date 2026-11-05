@@ -16,10 +16,10 @@ Requires **Orca desktop 1.4.248 or newer**.
 2. Choose **Add plugin → From a Git URL…** and enter:
 
    ```text
-   https://github.com/faisalmuhammad/orca-sidequest#v0.1.0
+   https://github.com/faisalmuhammad/orca-sidequest#v0.2.0
    ```
 
-   Keep `#v0.1.0` at the end. Orca requires a release tag or commit hash to install from Git.
+   Keep `#v0.2.0` at the end. Orca requires a release tag or commit hash to install from Git.
 3. Review and approve the requested access: a **sandboxed panel** and **plugin-owned storage** for saved progress.
 4. Select **Sidequest** using the puzzle icon in the right sidebar, then pick a game. **All games** returns to the picker; the selector switches games directly.
 
