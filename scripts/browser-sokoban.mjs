@@ -70,7 +70,7 @@ export async function runSokobanSmoke() {
     await act('wait', '--selector', '#app[aria-busy=false]');
     original = await evaluate('localStorage.getItem(' + journal + ')'); capturedOriginal = true;
     await seed(null);
-    assert.equal(await evaluate('document.querySelectorAll(".game-card").length'), 12);
+    assert.equal(await evaluate('document.querySelectorAll(".game-card").length'), 15);
     assert.equal(await evaluate('document.querySelector("[data-action=library-view]").nextElementSibling.id'), 'sound-button');
     for (const theme of ['dark', 'light']) {
       await evaluate('(() => { document.documentElement.className=' + JSON.stringify(theme) + ';return true; })()');

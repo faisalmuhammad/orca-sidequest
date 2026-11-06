@@ -16,10 +16,10 @@ Requires **Orca desktop 1.4.248 or newer**.
 2. Choose **Add plugin → From a Git URL…** and enter:
 
    ```text
-   https://github.com/faisalmuhammad/orca-sidequest#v0.4.0
+   https://github.com/faisalmuhammad/orca-sidequest#v0.4.1
    ```
 
-   Keep `#v0.4.0` at the end. Orca requires a release tag or commit hash to install from Git.
+   Keep `#v0.4.1` at the end. Orca requires a release tag or commit hash to install from Git.
 3. Review and approve the requested access: a **sandboxed panel** and **plugin-owned storage** for saved progress.
 4. Select **Sidequest** using the puzzle icon in the right sidebar, then pick a game. **All games** returns to the picker; the selector switches games directly.
 
@@ -31,29 +31,29 @@ Pick a quick game from the library. Each keeps its own progress, and the artwork
 
 <table>
   <tr>
-    <td width="33%" align="center"><img src="assets/games/2048.png" alt="2048 card artwork: colorful numbered tiles" width="240"><br><strong>2048</strong><br><sub>Find your flow. Chase the next merge.</sub></td>
-    <td width="33%" align="center"><img src="assets/games/sudoku.png" alt="Sudoku card artwork: an indigo number grid" width="240"><br><strong>Sudoku</strong><br><sub>Clear the grid, one number at a time.</sub></td>
-    <td width="33%" align="center"><img src="assets/games/checkers.png" alt="Checkers card artwork: coral and ink pieces on a board" width="240"><br><strong>Checkers</strong><br><sub>A small board. A new strategy.</sub></td>
+    <td width="33%" align="center"><img src="assets/games/2048.png" alt="2048 card artwork: colorful numbered tiles" width="240"><br><strong>2048</strong></td>
+    <td width="33%" align="center"><img src="assets/games/sudoku.png" alt="Sudoku card artwork: an indigo number grid" width="240"><br><strong>Sudoku</strong></td>
+    <td width="33%" align="center"><img src="assets/games/checkers.png" alt="Checkers card artwork: coral and ink pieces on a board" width="240"><br><strong>Checkers</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/games/blocks.png" alt="Falling Blocks card artwork: colorful stacked pieces" width="240"><br><strong>Falling Blocks</strong><br><sub>Fit the pieces. Clear the lines.</sub></td>
-    <td align="center"><img src="assets/games/memory.png" alt="Memory card artwork: matching symbol cards" width="240"><br><strong>Memory</strong><br><sub>A familiar face, twice.</sub></td>
-    <td align="center"><img src="assets/games/minesweeper.png" alt="Minesweeper card artwork: numbered squares and flags" width="240"><br><strong>Minesweeper</strong><br><sub>Trust the numbers. Find the safe path.</sub></td>
+    <td align="center"><img src="assets/games/blocks.png" alt="Falling Blocks card artwork: colorful stacked pieces" width="240"><br><strong>Falling Blocks</strong></td>
+    <td align="center"><img src="assets/games/memory.png" alt="Memory card artwork: matching symbol cards" width="240"><br><strong>Memory</strong></td>
+    <td align="center"><img src="assets/games/minesweeper.png" alt="Minesweeper card artwork: numbered squares and flags" width="240"><br><strong>Minesweeper</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/games/lights.png" alt="Lights Out card artwork: glowing amber tiles" width="240"><br><strong>Lights Out</strong><br><sub>Clear your mind. Turn down the lights.</sub></td>
-    <td align="center"><img src="assets/games/nonograms.png" alt="Nonograms card artwork: a green pixel picture" width="240"><br><strong>Nonograms</strong><br><sub>Follow the clues. Reveal a picture.</sub></td>
-    <td align="center"><img src="assets/games/codebreaker.png" alt="Codebreaker card artwork: a colorful symbol sequence" width="240"><br><strong>Codebreaker</strong><br><sub>Read the feedback. Crack the sequence.</sub></td>
+    <td align="center"><img src="assets/games/lights.png" alt="Lights Out card artwork: glowing amber tiles" width="240"><br><strong>Lights Out</strong></td>
+    <td align="center"><img src="assets/games/nonograms.png" alt="Nonograms card artwork: a green pixel picture" width="240"><br><strong>Nonograms</strong></td>
+    <td align="center"><img src="assets/games/codebreaker.png" alt="Codebreaker card artwork: a colorful symbol sequence" width="240"><br><strong>Codebreaker</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/games/sliding.png" alt="Sliding Puzzle card artwork: numbered tiles around an empty space" width="240"><br><strong>Sliding Puzzle</strong><br><sub>One empty space. A little order.</sub></td>
-    <td align="center"><img src="assets/games/connect.png" alt="Connect Four card artwork: coral and mint pieces in a grid" width="240"><br><strong>Connect Four</strong><br><sub>Think ahead. Connect your next four.</sub></td>
-    <td align="center"><img src="assets/games/sokoban.png" alt="Sokoban card artwork: a crate, player, and glowing target in a small room" width="240"><br><strong>Sokoban</strong><br><sub>Make room. Deliver every crate.</sub></td>
+    <td align="center"><img src="assets/games/sliding.png" alt="Sliding Puzzle card artwork: numbered tiles around an empty space" width="240"><br><strong>Sliding Puzzle</strong></td>
+    <td align="center"><img src="assets/games/connect.png" alt="Connect Four card artwork: coral and mint pieces in a grid" width="240"><br><strong>Connect Four</strong></td>
+    <td align="center"><img src="assets/games/sokoban.png" alt="Sokoban card artwork: a crate, player, and glowing target in a small room" width="240"><br><strong>Sokoban</strong></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/games/wordle.png" alt="Wordle card artwork: green and yellow letter tiles" width="240"><br><strong>Wordle</strong><br><sub>Five letters. Six tries. One word.</sub></td>
-    <td align="center"><img src="assets/games/simon.png" alt="Simon card artwork: four colored pads in a circle" width="240"><br><strong>Simon</strong><br><sub>Watch. Remember. Repeat the pattern.</sub></td>
-    <td align="center"><img src="assets/games/flood.png" alt="Flood Fill card artwork: a multicolored grid" width="240"><br><strong>Flood Fill</strong><br><sub>Fill the board in limited moves.</sub></td>
+    <td align="center"><img src="assets/games/wordle.png" alt="Wordle card artwork: green and yellow letter tiles" width="240"><br><strong>Wordle</strong></td>
+    <td align="center"><img src="assets/games/simon.png" alt="Simon card artwork: four colored pads in a circle" width="240"><br><strong>Simon</strong></td>
+    <td align="center"><img src="assets/games/flood.png" alt="Flood Fill card artwork: a multicolored grid" width="240"><br><strong>Flood Fill</strong></td>
   </tr>
 </table>
 
@@ -71,14 +71,12 @@ The previews combine **actual interface captures from Orca’s embedded browser*
 | --- | --- |
 | One game picker | Switch games inside the same sidebar |
 | Saved progress | Each game keeps its own round and personal records |
-| Keyboard and touch | Controls and shortcuts appear within each game |
+| Keyboard and touch | Each game accepts its shortcuts while the panel is focused; arrows also navigate Checkers and Memory |
 | Optional sound | Turn sound on or off using the speaker button; your choice is saved |
 | Thoughtful motion | Smooth transitions, with reduced-motion support |
 | Light and dark | Styling follows Orca’s appearance |
 | Library views | Switch between compact tiles and expanded cards with the header button beside sound; your choice is saved |
 | Sidebar layout | Works in narrow sidebars; real-time play pauses when you leave |
-
-The status-bar puzzle icon toggles the right sidebar. If another panel is selected, choose Sidequest’s puzzle tab. Orca’s current plugin API cannot select a specific panel or report which panel is active, so the status-bar icon cannot reflect Sidequest’s active state yet.
 
 ## Progress and access
 
@@ -110,9 +108,13 @@ npm run preview
 
 Open http://127.0.0.1:4318. Set `SIDEQUEST_PREVIEW_PORT` to change the port. With the preview running and Orca open, run `npm run test:browser` to check real input, game switching, save recovery, narrow layouts, and audio output. Diagnostic captures are saved under `.orca/shots/`.
 
+Run `npm run test:browser:keyboard` to check physical keyboard input in all 15 games, including restored panels, toolbar focus, undo, pause, and game switching. It restores the preview’s previous saved progress. Use `npm run test:browser:keyboard -- --game sliding` to check Sliding Puzzle’s tile directions, edges, completion, undo, and focus on both board sizes.
+
+Run `npm run test:browser:wordle` for focused keyboard checks: restored panels, board clicks, toolbar focus, text editing, dialogs, replay, and switching games. These checks restore the standalone preview’s previous save.
+
 Game rules live in `panel/games/`; panel modules handle rendering and controls; `panel/storage.mjs` handles persistence. Keep new games self-contained, keyboard and touch accessible, compact, and dependency-free. Register their creator and validator, add a picker entry, and test rules, save recovery, and interaction.
 
-Validated on macOS with Orca **1.4.250**: **115** rules, sound, and save tests; browser checks at **320px** and **240px**, including the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
+Validated on macOS with Orca **1.4.250**: **115** rules, sound, and save tests; browser checks at **320px** and **240px**, including all 15 games’ keyboard controls and the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
 
 The manifest references release images in `assets/`. Vector sources and original captures are retained under `assets/source/`. Run `scripts/release-art.mjs` to render artwork and `scripts/release-shots.mjs` with the preview running to capture the interface. These optional image tools use Sharp. Install it locally with `npm install --no-save --package-lock=false sharp`, or set `SHARP_MODULE` to an installed ESM module. Sharp is not a runtime dependency.
 

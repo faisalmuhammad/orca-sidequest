@@ -1,3 +1,4 @@
+import { bindGameKeyboard } from './keyboard.mjs';
 import { NONOGRAM_DIFFICULTIES, createNonogram, nonogramClues, nonogramClue, markNonogram, undoNonogram, isNonogramComplete } from './games/nonograms.mjs';
 import { CODE_COLORS, createCodebreaker, enterCode, submitCode } from './games/codebreaker.mjs';
 import { SLIDING_DIFFICULTIES, createSliding, slideTile, undoSliding, isSlidingComplete } from './games/sliding.mjs';
@@ -22,7 +23,7 @@ export function moreCards(games,icon) {
   });
 }
 export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
-  let mounted=null,root=null,crossMode=false,cursor=0,suspended=false,moving=false,motion=0,animations=[],aiTimer=null,watchTimer=null,watchToken=0,cleanup=[];
+  let mounted=null,root=null,crossMode=false,cursor=0,nonoCursor=0,connectCursor=0,suspended=false,moving=false,motion=0,animations=[],aiTimer=null,watchTimer=null,watchToken=0,cleanup=[];
   const state=()=>getSave().games[mounted];
   const btn=(action,label,symbol='',attrs='')=>`<button type="button" class="button" data-more="${action}" ${attrs}>${symbol?icon(symbol):''}${label}</button>`;
   const options=(id,s)=>`<div class="quick-options"><select id="more-difficulty" aria-label="${MORE_NAMES[id]} difficulty">${Object.entries(id==='nonograms'?NONOGRAM_DIFFICULTIES:SLIDING_DIFFICULTIES).map(([key,rule])=>`<option value="${key}" ${s.difficulty===key?'selected':''}>${rule.label}</option>`).join('')}</select><span class="quick-difficulty-note">${id==='nonograms'?'One unique picture':'Every board is solvable'}</span></div>`;
@@ -36,10 +37,10 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     }
     if(id==='nonograms') return `${header}${options(id,s)}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">SQUARES FILLED</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="nonogram-layout" style="--grid-size:${s.size}"><div class="nonogram-corner" aria-hidden="true">${icon('game')}</div><div id="nonogram-columns" class="nonogram-columns" aria-label="Column clues"></div><div id="nonogram-rows" class="nonogram-rows" aria-label="Row clues"></div><div id="nonogram-board" class="nonogram-board" role="group" aria-label="Nonogram picture grid"></div></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="quick-tools"><div class="mine-input-mode" role="group" aria-label="Square action">${btn('fill-mode','Fill','pencil','id="nono-fill" aria-pressed="true"')}${btn('cross-mode','Cross','close','id="nono-cross" aria-pressed="false"')}</div>${btn('undo','Undo','undo','id="more-undo"')}</div><p class="quick-feedback">Clues describe runs of filled squares.<br>Leave at least one space between each run.</p><p class="quick-best" id="more-best"></p><p class="instructions">Tap to fill. Right-click or use Cross to mark a gap.<br><kbd>Arrows</kbd> navigate · <kbd>Enter</kbd> fill · <kbd>X</kbd> cross</p></section>`;
     if(id==='codebreaker') return `${header}<div class="code-secret" id="code-secret" aria-label="Hidden sequence"></div><div class="code-rules">Six symbols · repeats allowed · ten guesses</div><div class="code-log" id="code-log" role="log" aria-label="Submitted guesses"></div><div class="board-wrap"><div class="code-input"><div class="code-draft" id="code-draft" role="group" aria-label="Your guess"></div><div class="code-palette">${CODE_COLORS.map((name,i)=>`<button type="button" class="code-color" data-color-choice="${i}" aria-label="${name}, color ${i+1}">${codePeg(i,icon)}<span>${i+1}</span></button>`).join('')}</div>${btn('submit','Check guess','check','id="code-submit"')}${btn('clear','Clear','erase','id="code-clear"')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><p class="quick-feedback" id="code-feedback">Choose a slot, then a symbol.</p><p class="quick-best" id="more-best"></p><p class="instructions">Exact: correct symbol and position.<br>Close: correct symbol in another position.<br><kbd>1–6</kbd> choose · <kbd>← →</kbd> slots · <kbd>Enter</kbd> check</p></section>`;
-    if(id==='sliding') return `${header}${options(id,s)}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">TILES IN PLACE</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="sliding-board" id="sliding-board" role="group" tabindex="0" aria-label="Sliding puzzle board. Arrow keys move the empty space." style="--grid-size:${s.size}"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="game-tools">${btn('undo','Undo','undo','id="more-undo"')}<span class="move-count">Arrange 1 to ${s.size**2-1}</span></div><p class="quick-best" id="more-best"></p><p class="instructions">Tap a tile beside the gap to slide it.<br><kbd>↑ ↓ ← →</kbd> move the empty space.<br>Finish with the gap in the bottom-right corner.</p></section>`;
+    if(id==='sliding') return `${header}${options(id,s)}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">TILES IN PLACE</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="sliding-board" id="sliding-board" role="group" tabindex="0" aria-label="Sliding puzzle board. Arrow keys slide tiles in the indicated direction." style="--grid-size:${s.size}"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="game-tools">${btn('undo','Undo','undo','id="more-undo"')}<span class="move-count">Arrange 1 to ${s.size**2-1}</span></div><p class="quick-best" id="more-best"></p><p class="instructions">Tap a tile beside the gap to slide it.<br><kbd>↑ ↓ ← →</kbd> slide tiles in that direction.<br>Finish with the gap in the bottom-right corner.</p></section>`;
     if(id==='wordle') {
       const KEYBOARD_ROWS=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['enter','z','x','c','v','b','n','m','back']];
-      return `${header}<div class="wordle-rules">Guess a five-letter word · six tries</div><div class="board-wrap"><div class="wordle-board" id="wordle-board" role="group" aria-label="Wordle guess board">${Array.from({length:6},(_,r)=>`<div class="wordle-row">${Array.from({length:5},(_,c)=>`<span class="wordle-tile" data-row="${r}" data-col="${c}"></span>`).join('')}</div>`).join('')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="wordle-keyboard" id="wordle-keyboard" role="group" aria-label="On-screen keyboard">${KEYBOARD_ROWS.map(row=>`<div class="wordle-kb-row">${row.map(k=>k==='enter'?`<button type="button" class="wordle-key wide" data-wkey="enter" aria-label="Submit guess">${icon('check')}</button>`:k==='back'?`<button type="button" class="wordle-key wide" data-wkey="back" aria-label="Delete letter">${icon('undo')}</button>`:`<button type="button" class="wordle-key" data-wkey="${k}">${k}</button>`).join('')}</div>`).join('')}</div><p class="quick-feedback" id="wordle-feedback">Type a word and press Enter.</p><p class="quick-best" id="more-best"></p><p class="instructions">Type a five-letter word and press Enter to guess.<br><kbd>A–Z</kbd> type · <kbd>Enter</kbd> submit · <kbd>Backspace</kbd> delete</p></section>`;
+      return `${header}<div class="wordle-rules">Guess a five-letter word · six tries</div><div class="board-wrap"><div class="wordle-board" id="wordle-board" role="group" tabindex="0" aria-label="Wordle guess board. Type letters, Enter to submit, Backspace to delete.">${Array.from({length:6},(_,r)=>`<div class="wordle-row">${Array.from({length:5},(_,c)=>`<span class="wordle-tile" data-row="${r}" data-col="${c}"></span>`).join('')}</div>`).join('')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="wordle-keyboard" id="wordle-keyboard" role="group" aria-label="On-screen keyboard">${KEYBOARD_ROWS.map(row=>`<div class="wordle-kb-row">${row.map(k=>k==='enter'?`<button type="button" class="wordle-key wide" data-wkey="enter" aria-label="Submit guess">${icon('check')}</button>`:k==='back'?`<button type="button" class="wordle-key wide" data-wkey="back" aria-label="Delete letter">${icon('undo')}</button>`:`<button type="button" class="wordle-key" data-wkey="${k}">${k}</button>`).join('')}</div>`).join('')}</div><p class="quick-feedback" id="wordle-feedback">Type a word and press Enter.</p><p class="quick-best" id="more-best"></p><p class="instructions">Type a five-letter word and press Enter to guess.<br><kbd>A–Z</kbd> type · <kbd>Enter</kbd> submit · <kbd>Backspace</kbd> delete</p></section>`;
     }
     return `${header}<div class="checkers-topline"><select id="connect-mode" aria-label="Connect Four opponent"><option value="computer" ${s.mode==='computer'?'selected':''}>Vs computer</option><option value="local" ${s.mode==='local'?'selected':''}>Two players</option></select><span id="connect-turn"></span></div><div class="connect-players"><span><i data-player="1"></i>${s.mode==='computer'?'You':'Coral'}</span><span><i data-player="-1"></i>${s.mode==='computer'?'Computer':'Mint'}</span></div><div class="board-wrap"><div class="connect-board" id="connect-board" role="group" aria-label="Connect Four board"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="game-tools">${btn('undo','Undo','undo','id="more-undo"')}<span class="move-count" id="connect-count"></span></div><p class="instructions">Choose a column to drop your piece.<br>Connect four horizontally, vertically, or diagonally.<br><kbd>← →</kbd> choose column · <kbd>Enter</kbd> drop</p></section>`;
   }
@@ -50,7 +51,7 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
   function best(s) {const value=s.best[s.difficulty];return `Personal best · ${value===null?'Set your first record':value+' moves'}`;}
   function updateNonogram() {
     const s=state(),{rows,columns}=nonogramClues(s.solution,s.size),board=root.querySelector('#nonogram-board');
-    const focused=board.contains(document.activeElement),index=document.activeElement.dataset.nono;
+    const focused=board.contains(document.activeElement),index=document.activeElement.dataset.nono??nonoCursor;
     const rowDone=row=>JSON.stringify(nonogramClue(s.cells.slice(row*s.size,(row+1)*s.size).map(n=>n===1?1:0)))===JSON.stringify(rows[row]);
     const colDone=col=>JSON.stringify(nonogramClue(Array.from({length:s.size},(_,row)=>s.cells[row*s.size+col]===1?1:0)))===JSON.stringify(columns[col]);
     root.querySelector('#nonogram-rows').innerHTML=rows.map((clue,i)=>`<div class="${rowDone(i)?'clue-done':''}" aria-label="Row ${i+1}: ${clue.join(', ')}">${clue.map(n=>`<span>${n}</span>`).join('')}</div>`).join('');
@@ -84,7 +85,7 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     const complete=isSlidingComplete(s);board.inert=complete;finish(complete,complete?`<h2>Everything in place.</h2><p>A little order, in ${s.moves} moves.</p>`:'');
   }
   function updateConnect() {
-    const s=state(),board=root.querySelector('#connect-board'),focused=board.contains(document.activeElement),column=document.activeElement.dataset.connect;
+    const s=state(),board=root.querySelector('#connect-board'),focused=board.contains(document.activeElement),column=document.activeElement.dataset.connect??connectCursor;
     const winning=connectWinningCells(s.board);
     board.innerHTML=Array.from({length:7},(_,col)=>`<button type="button" class="connect-column" data-connect="${col}" aria-label="Drop in column ${col+1}" aria-describedby="connect-column-state-${col}" tabindex="${col===Number(column??connectColumns(s)[0]??0)?0:-1}" ${s.board[col]?'disabled':''}><span class="column-guide" aria-hidden="true">${col+1}</span><span class="sr-only" id="connect-column-state-${col}">From top: ${Array.from({length:6},(_,row)=>s.board[row*7+col]===1?'coral':s.board[row*7+col]===-1?'mint':'empty').join(', ')}.</span>${Array.from({length:6},(_,row)=>{const i=row*7+col;return `<span class="connect-hole${winning.includes(i)?' winning':''}"><i data-player="${s.board[i]}" data-disc="${i}"></i></span>`;}).join('')}</button>`).join('');
     root.querySelector('#connect-turn').textContent=s.result?'Round complete':s.mode==='computer'&&s.turn===-1?'Thinking…':(s.turn===1?s.mode==='computer'?'Your':'Coral':'Mint')+' turn';
@@ -169,11 +170,11 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
   }
   function click(e) {
     const target=e.target.closest('button');if(!target||target.disabled||suspended)return;
-    if(target.dataset.nono!==undefined){markSquare(Number(target.dataset.nono),crossMode?-1:1);return;}
+    if(target.dataset.nono!==undefined){nonoCursor=Number(target.dataset.nono);markSquare(Number(target.dataset.nono),crossMode?-1:1);return;}
     if(target.dataset.slot!==undefined){cursor=Number(target.dataset.slot);update();focus();return;}
     if(target.dataset.colorChoice!==undefined){set(enterCode(state(),cursor,Number(target.dataset.colorChoice)));cursor=(cursor+1)%4;update();focus();void sound.play('tick');return;}
     if(target.dataset.slide!==undefined){void playSlide(Number(target.dataset.slide));return;}
-    if(target.dataset.connect!==undefined){if(state().mode!=='computer'||state().turn===1)void playConnect(Number(target.dataset.connect));return;}
+    if(target.dataset.connect!==undefined){connectCursor=Number(target.dataset.connect);if(state().mode!=='computer'||state().turn===1)void playConnect(Number(target.dataset.connect));return;}
     if(target.dataset.wkey!==undefined){
       const key=target.dataset.wkey,s=state();if(s.result)return;
       if(key==='enter'){const next=submitGuess(s);if(set(next)){void sound.play(next.result==='won'?'win':next.result==='lost'?'error':'merge');announce(next.result==='won'?'Correct!':next.result==='lost'?`The word was ${next.target}.`:'Guess submitted.');}}
@@ -190,24 +191,28 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     else if(action==='submit'){if(set(submitCode(state()))){cursor=0;update();void sound.play(state().result==='won'?'win':state().result==='lost'?'error':'merge');const g=state().guesses.at(-1);announce(`${g.exact} exact, ${g.misplaced} close.`);focus();}}
     else if(action==='clear'){const before=state();if(before.draft.some(n=>n!==null))set({...before,draft:Array(4).fill(null)});cursor=0;update();focus();}
   }
-  function keydown(e) {
-    if(suspended||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('select')||document.getElementById('confirm-dialog').open)return;
-    if(mounted==='codebreaker'&&e.target.closest('.code-input')) {
+  function keydown(e, target = e.target) {
+    if(suspended||e.defaultPrevented||e.isComposing||e.altKey||e.ctrlKey||e.metaKey||target.closest?.('input,textarea,select')||target.isContentEditable||document.getElementById('confirm-dialog').open)return;
+    if(mounted==='codebreaker'&&target.closest('.code-input')) {
       if(/^[1-6]$/.test(e.key)){e.preventDefault();if(!e.repeat){set(enterCode(state(),cursor,Number(e.key)-1));cursor=(cursor+1)%4;update();focus();}}
       else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();cursor=(cursor+(e.key==='ArrowLeft'?3:1))%4;update();focus();}
       else if(e.key==='Enter'){e.preventDefault();root.querySelector('#code-submit').click();}
       else if(e.key==='Backspace'||e.key==='Delete'){e.preventDefault();set(enterCode(state(),cursor,null));focus();}
-    } else if(mounted==='sliding'&&e.target.closest('#sliding-board')) {
-      const s=state(),blank=s.board.indexOf(0);let target=blank;
-      if(e.key==='ArrowLeft'&&blank%s.size)target--;if(e.key==='ArrowRight'&&blank%s.size<s.size-1)target++;if(e.key==='ArrowUp'&&blank>=s.size)target-=s.size;if(e.key==='ArrowDown'&&blank<s.size*(s.size-1))target+=s.size;
-      if(e.key.startsWith('Arrow')){e.preventDefault();if(target!==blank)void playSlide(target);}
-    } else if(mounted==='nonograms'&&e.target.dataset.nono!==undefined) {
-      const index=Number(e.target.dataset.nono),size=state().size;let next=index;
+    } else if(mounted==='sliding'&&target.closest('#sliding-board')) {
+      const s=state(),blank=s.board.indexOf(0);let tileIndex=blank;
+      // Choose the tile that will slide into the gap in the arrow's direction.
+      if(e.key==='ArrowLeft'&&blank%s.size<s.size-1)tileIndex++;
+      if(e.key==='ArrowRight'&&blank%s.size)tileIndex--;
+      if(e.key==='ArrowUp'&&blank<s.size*(s.size-1))tileIndex+=s.size;
+      if(e.key==='ArrowDown'&&blank>=s.size)tileIndex-=s.size;
+      if(e.key.startsWith('Arrow')){e.preventDefault();if(tileIndex!==blank)void playSlide(tileIndex);}
+    } else if(mounted==='nonograms'&&target.dataset.nono!==undefined) {
+      const index=Number(target.dataset.nono),size=state().size;let next=index;
       if(e.key==='ArrowLeft'&&index%size)next--;if(e.key==='ArrowRight'&&index%size<size-1)next++;if(e.key==='ArrowUp'&&index>=size)next-=size;if(e.key==='ArrowDown'&&index<size*(size-1))next+=size;
-      if(e.key.startsWith('Arrow')){e.preventDefault();root.querySelectorAll('[data-nono]').forEach(node=>{node.tabIndex=Number(node.dataset.nono)===next?0:-1;});root.querySelector(`[data-nono="${next}"]`)?.focus({preventScroll:true});}
+      if(e.key.startsWith('Arrow')){e.preventDefault();nonoCursor=next;root.querySelectorAll('[data-nono]').forEach(node=>{node.tabIndex=Number(node.dataset.nono)===next?0:-1;});root.querySelector(`[data-nono="${next}"]`)?.focus({preventScroll:true});}
       else if(e.key.toLowerCase()==='x'){e.preventDefault();if(!e.repeat)markSquare(index,-1);}
       else if(e.key==='Enter'){e.preventDefault();if(!e.repeat)markSquare(index,1);}
-    } else if(mounted==='connect'&&e.target.dataset.connect!==undefined&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();let col=Number(e.target.dataset.connect),step=e.key==='ArrowLeft'?-1:1;for(let i=0;i<7;i++){col=(col+step+7)%7;const node=root.querySelector(`[data-connect="${col}"]`);if(!node.disabled){root.querySelectorAll('[data-connect]').forEach(n=>{n.tabIndex=n===node?0:-1;});node.focus({preventScroll:true});break;}}}
+    } else if(mounted==='connect'&&target.dataset.connect!==undefined&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();let col=Number(target.dataset.connect),step=e.key==='ArrowLeft'?-1:1;for(let i=0;i<7;i++){col=(col+step+7)%7;const node=root.querySelector(`[data-connect="${col}"]`);if(!node.disabled){connectCursor=col;root.querySelectorAll('[data-connect]').forEach(n=>{n.tabIndex=n===node?0:-1;});node.focus({preventScroll:true});break;}}}
     else if(mounted==='wordle') {
       const s=state();if(s.result)return;
       if(/^[a-zA-Z]$/.test(e.key)&&!e.repeat){e.preventDefault();set(enterLetter(s,e.key.toLowerCase()));void sound.play('tick');}
@@ -223,17 +228,32 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
   }
   function focus() {
     if(!root)return;const overlay=root.querySelector('#more-overlay');
-    const node=!overlay.hidden?overlay.querySelector('button'):mounted==='codebreaker'?root.querySelector(`[data-slot="${cursor}"]`):mounted==='sliding'?root.querySelector('#sliding-board'):mounted==='wordle'?root.querySelector('#wordle-keyboard [data-wkey]'):mounted==='simon'?root.querySelector('[data-pad="0"]'):mounted==='flood'?root.querySelector('.flood-color:not(:disabled)'):root.querySelector('[tabindex="0"]');node?.focus({preventScroll:true});
+    const node=!overlay.hidden?overlay.querySelector('button'):mounted==='codebreaker'?root.querySelector(`[data-slot="${cursor}"]`):mounted==='sliding'?root.querySelector('#sliding-board'):mounted==='wordle'?root.querySelector('#wordle-board'):mounted==='simon'?root.querySelector('[data-pad="0"]'):mounted==='flood'?root.querySelector('.flood-color:not(:disabled)'):root.querySelector('[tabindex="0"]');node?.focus({preventScroll:true});
   }
   function mount(id) {
     mounted=id;root=document.getElementById('more-game');crossMode=false;cursor=id==='codebreaker'?Math.max(0,state().draft.findIndex(n=>n===null)):0;suspended=false;
     const change=e=>{if(e.target.id==='more-difficulty'||e.target.id==='connect-mode'){const value=e.target.value;e.target.value=mounted==='flood'?state().difficulty:state().difficulty??state().mode;onNew(id,value);}};
     const context=e=>{const cell=e.target.closest('[data-nono]');if(id==='nonograms'&&cell){e.preventDefault();markSquare(Number(cell.dataset.nono),-1);}};
     const inactive=()=>{clearTimeout(aiTimer);aiTimer=null;},active=()=>{if(mounted==='connect'&&!document.hidden)update();};
-    root.addEventListener('click',click);root.addEventListener('keydown',keydown);root.addEventListener('change',change);root.addEventListener('contextmenu',context);
+    const areas={nonograms:'#nonogram-board',codebreaker:'#code-draft',sliding:'#sliding-board',connect:'#connect-board',wordle:'#wordle-board,#wordle-keyboard',simon:'.simon-board',flood:'.flood-palette'};
+    const unbindKeyboard=bindGameKeyboard({
+      area:areas[id],focus,onKey:keydown,blocked:()=>suspended||document.getElementById('confirm-dialog').open,
+      keys:e=>{
+        if(['Enter',' '].includes(e.key))return true;
+        if(mounted==='wordle')return /^[a-z]$/i.test(e.key)||['Backspace','Delete'].includes(e.key);
+        if(mounted==='simon')return /^[1-4]$/.test(e.key);
+        if(mounted==='flood')return /^[1-6]$/.test(e.key);
+        if(mounted==='codebreaker')return /^[1-6]$/.test(e.key)||['ArrowLeft','ArrowRight','Backspace','Delete'].includes(e.key);
+        return e.key.startsWith('Arrow')||(mounted==='nonograms'&&e.key.toLowerCase()==='x');
+      }
+    });
+    const pointerdown=e=>{if(id==='wordle'&&!suspended&&e.isPrimary&&e.button===0&&e.target.closest('#wordle-board'))focus();};
+    const focusin=e=>{if(e.target.dataset.nono!==undefined)nonoCursor=Number(e.target.dataset.nono);if(e.target.dataset.connect!==undefined)connectCursor=Number(e.target.dataset.connect);};
+    nonoCursor=0;connectCursor=0;
+    root.addEventListener('click',click);root.addEventListener('focus',focusin,true);root.addEventListener('pointerdown',pointerdown);root.addEventListener('change',change);root.addEventListener('contextmenu',context);
     window.addEventListener('blur',inactive);window.addEventListener('focus',active);
     const visibility=()=>document.hidden?inactive():active();document.addEventListener('visibilitychange',visibility);const element=root;
-    cleanup.push(()=>{element.removeEventListener('click',click);element.removeEventListener('keydown',keydown);element.removeEventListener('change',change);element.removeEventListener('contextmenu',context);window.removeEventListener('blur',inactive);window.removeEventListener('focus',active);document.removeEventListener('visibilitychange',visibility);});update();
+    cleanup.push(()=>{element.removeEventListener('click',click);unbindKeyboard();element.removeEventListener('focus',focusin,true);element.removeEventListener('pointerdown',pointerdown);element.removeEventListener('change',change);element.removeEventListener('contextmenu',context);window.removeEventListener('blur',inactive);window.removeEventListener('focus',active);document.removeEventListener('visibilitychange',visibility);});update();
   }
   function dispose(){cancelMotion();clearTimeout(aiTimer);aiTimer=null;clearTimeout(watchTimer);watchTimer=null;watchToken++;cleanup.forEach(fn=>fn());cleanup=[];mounted=null;root=null;}
   function suspend(){if(!mounted)return;suspended=true;clearTimeout(aiTimer);aiTimer=null;clearTimeout(watchTimer);watchTimer=null;watchToken++;cancelMotion();update();}

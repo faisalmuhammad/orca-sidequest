@@ -1,3 +1,4 @@
+import { bindGameKeyboard } from './keyboard.mjs';
 import { SOKOBAN_LEVELS, createSokoban, moveSokoban, undoSokoban, isSokobanComplete, sokobanDeadlocks, sokobanNeighbor } from './games/sokoban.mjs';
 import { celebration } from './effects.mjs';
 export { createSokoban };
@@ -10,7 +11,7 @@ export function sokobanCard(games, icon) {
 }
 
 export function createSokobanPanel({ getSave, persist, sound, icon, announce, onNew }) {
-  let root = null, moving = false, suspended = false, token = 0, animations = [], queue = [], touch = null;
+  let root = null, moving = false, suspended = false, token = 0, animations = [], queue = [], touch = null, unbindKeyboard = null;
   const state = () => getSave().games.sokoban;
   const button = (action, label, symbol, attrs = '') => `<button type="button" class="button" data-soko="${action}" ${attrs}>${symbol ? icon(symbol) : ''}${label}</button>`;
   function render() {
@@ -80,10 +81,10 @@ export function createSokobanPanel({ getSave, persist, sound, icon, announce, on
     else if (action === 'next' && state().level < state().unlocked) onNew('sokoban', state().level + 1);
     else if (action === 'first') onNew('sokoban', 0);
   }
-  function keydown(event) {
-    if (suspended || event.altKey || event.target.closest('select') || document.getElementById('confirm-dialog').open) return;
+  function keydown(event, target = event.target) {
+    if (suspended || event.altKey || target.closest('select') || document.getElementById('confirm-dialog').open) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) { event.preventDefault(); undo(); return; }
-    if (event.ctrlKey || event.metaKey || !event.target.closest('#sokoban-board')) return;
+    if (event.ctrlKey || event.metaKey || !target.closest('#sokoban-board')) return;
     const direction = { ArrowUp: 'up', ArrowRight: 'right', ArrowDown: 'down', ArrowLeft: 'left', w: 'up', d: 'right', s: 'down', a: 'left' }[event.key] ?? { w: 'up', d: 'right', s: 'down', a: 'left' }[event.key.toLowerCase()];
     if (direction) { event.preventDefault(); void move(direction); }
     else if (event.key.toLowerCase() === 'r' && !event.repeat) { event.preventDefault(); onNew('sokoban'); }
@@ -103,12 +104,13 @@ export function createSokobanPanel({ getSave, persist, sound, icon, announce, on
   const pointercancel = () => { touch = null; };
   function mount() {
     root = document.getElementById('sokoban-game'); suspended = false;
-    root.addEventListener('click', click); root.addEventListener('keydown', keydown); root.addEventListener('change', change);
+    unbindKeyboard = bindGameKeyboard({ area: '#sokoban-board', focus, onKey: keydown, undo: true, blocked: () => suspended || document.getElementById('confirm-dialog').open, keys: e => e.key.startsWith('Arrow') || /^[wasdr]$/i.test(e.key) || ['Enter', ' '].includes(e.key) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') });
+    root.addEventListener('click', click); root.addEventListener('change', change);
     root.addEventListener('pointerdown', pointerdown); root.addEventListener('pointerup', pointerup); root.addEventListener('pointercancel', pointercancel); update();
   }
   function dispose() {
     cancel(); if (!root) return;
-    root.removeEventListener('click', click); root.removeEventListener('keydown', keydown); root.removeEventListener('change', change);
+    root.removeEventListener('click', click); unbindKeyboard?.(); unbindKeyboard = null; root.removeEventListener('change', change);
     root.removeEventListener('pointerdown', pointerdown); root.removeEventListener('pointerup', pointerup); root.removeEventListener('pointercancel', pointercancel); root = null;
   }
   function suspend() { if (!root) return; suspended = true; cancel(); update(); }

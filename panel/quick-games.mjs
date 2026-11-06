@@ -1,3 +1,4 @@
+import { bindGameKeyboard } from './keyboard.mjs';
 import { MINE_DIFFICULTIES, createMinesweeper, revealMine, flagMine, mineCountAt } from './games/minesweeper.mjs';
 import { LIGHT_DIFFICULTIES, createLights, moveLights, undoLights, solveLights, isLightsComplete } from './games/lights.mjs';
 import { celebration } from './effects.mjs';
@@ -123,9 +124,9 @@ export function createQuickGames({ getSave, persist, sound, icon, announce, onNe
     nodes.forEach((node, i) => { node.tabIndex = i === Math.max(0, index) ? 0 : -1; });
     nodes[Math.max(0, index)]?.focus({ preventScroll: true });
   }
-  function keydown(e) {
-    if (suspended || e.altKey || e.ctrlKey || e.metaKey || e.target.dataset.quickCell === undefined || document.getElementById('confirm-dialog').open) return;
-    const index = Number(e.target.dataset.quickCell), size = state().size; let next = index;
+  function keydown(e, target = e.target) {
+    if (suspended || e.altKey || e.ctrlKey || e.metaKey || target.dataset.quickCell === undefined || document.getElementById('confirm-dialog').open) return;
+    const index = Number(target.dataset.quickCell), size = state().size; let next = index;
     if (e.key === 'ArrowLeft' && index % size) next--;
     if (e.key === 'ArrowRight' && index % size < size - 1) next++;
     if (e.key === 'ArrowUp' && index >= size) next -= size;
@@ -140,10 +141,11 @@ export function createQuickGames({ getSave, persist, sound, icon, announce, onNe
     const change = e => { if (e.target.id === 'quick-difficulty') { const difficulty = e.target.value; e.target.value = state().difficulty; checkpoint(); onNew(id, difficulty); } };
     const activity = () => { syncClock(); persist(); };
     const blur = () => { checkpoint(); clockStart = null; persist(); };
-    root.addEventListener('click', click); root.addEventListener('keydown', keydown); root.addEventListener('contextmenu', context); root.addEventListener('change', change);
+    const unbindKeyboard = bindGameKeyboard({ area: '#quick-board', focus, onKey: keydown, blocked: () => suspended || document.getElementById('confirm-dialog').open, keys: e => e.key.startsWith('Arrow') || ['Enter', ' '].includes(e.key) || (mounted === 'minesweeper' && e.key.toLowerCase() === 'f') });
+    root.addEventListener('click', click); root.addEventListener('contextmenu', context); root.addEventListener('change', change);
     window.addEventListener('blur', blur); window.addEventListener('pagehide', blur); window.addEventListener('focus', activity); document.addEventListener('visibilitychange', activity);
     const element = root;
-    cleanup.push(() => { element.removeEventListener('click', click); element.removeEventListener('keydown', keydown); element.removeEventListener('contextmenu', context); element.removeEventListener('change', change); window.removeEventListener('blur', blur); window.removeEventListener('pagehide', blur); window.removeEventListener('focus', activity); document.removeEventListener('visibilitychange', activity); });
+    cleanup.push(() => { element.removeEventListener('click', click); unbindKeyboard(); element.removeEventListener('contextmenu', context); element.removeEventListener('change', change); window.removeEventListener('blur', blur); window.removeEventListener('pagehide', blur); window.removeEventListener('focus', activity); document.removeEventListener('visibilitychange', activity); });
     if (id === 'minesweeper') timer = setInterval(() => { syncClock(); if (clockStart !== null && performance.now() - lastClockSave > 30000) { checkpoint(); persist(); lastClockSave = performance.now(); } }, 1000);
     update();
   }

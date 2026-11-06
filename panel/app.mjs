@@ -1,3 +1,4 @@
+import { bindGameKeyboard } from './keyboard.mjs';
 import { create2048, move2048, undo2048, is2048Over, isValid2048 } from './games/2048.mjs';
 import { DIFFICULTIES, createSudoku, peers, sudokuConflicts, enterSudoku, hintSudoku, autoNotesSudoku, newlyCompletedCells, undoSudoku, isSudokuComplete, isValidSudoku } from './games/sudoku.mjs';
 import { createSaveStore, normalizeSave, emptySave } from './storage.mjs';
@@ -274,6 +275,8 @@ function updateSudoku(animation = {}) {
 
 function focusSudoku() { document.querySelector(`[data-cell="${selected}"]`)?.focus({ preventScroll: true }); }
 function focusBoard() {
+  const overlay = document.getElementById(save.activeGame === 'sudoku' ? 'overlay-sudoku' : 'overlay-2048');
+  if (overlay && !overlay.hidden) { overlay.querySelector('button')?.focus({ preventScroll: true }); return; }
   if (save.activeGame === 'sudoku') focusSudoku();
   else if (EXTRA_NAMES[save.activeGame]) extras.focus();
   else document.getElementById('board-2048')?.focus({ preventScroll: true });
@@ -421,9 +424,9 @@ app.addEventListener('change', event => {
   if (event.target.id === 'difficulty-select') { const value = event.target.value; event.target.value = save.games.sudoku.difficulty; confirmNew('sudoku', value); }
   if (event.target.id === 'sort-select') { save.preferences.sortOrder = event.target.value; persist(); render(); document.getElementById('sort-select')?.focus({ preventScroll: true }); }
 });
-app.addEventListener('keydown', event => {
+function keydown(event, target = event.target) {
   if (dialog.open || event.altKey || event.target.closest('select')) return;
-  const board = event.target.closest('#board-2048, #sudoku-board');
+  const board = target.closest('#board-2048, #sudoku-board');
   if (!board) return;
   if (event.metaKey || event.ctrlKey) {
     if (event.key.toLowerCase() === 'z' && !event.shiftKey) {
@@ -449,6 +452,16 @@ app.addEventListener('keydown', event => {
     else if (['Backspace', 'Delete', '0'].includes(event.key)) { event.preventDefault(); enterNumber(0); }
     else if (event.key.toLowerCase() === 'n') { event.preventDefault(); pencil = !pencil; updateSudoku(); }
   }
+ }
+bindGameKeyboard({
+  area: () => save.activeGame === '2048' ? '#board-2048' : '#sudoku-board',
+  focus: focusBoard, onKey: keydown, undo: true,
+  blocked: () => !initialized || dialog.open,
+  keys: event => ['2048', 'sudoku'].includes(save.activeGame) && (
+    ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') ||
+    event.key.startsWith('Arrow') || ['Enter', ' '].includes(event.key) ||
+    (save.activeGame === '2048' ? /^[wasd]$/i.test(event.key) : /^[1-9n0]$/i.test(event.key) || ['Backspace', 'Delete'].includes(event.key))
+  ),
 });
 app.addEventListener('pointerdown', event => {
   const board = event.target.closest('#board-2048');

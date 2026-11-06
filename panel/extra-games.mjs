@@ -1,3 +1,4 @@
+import { bindGameKeyboard } from './keyboard.mjs';
 import {
   createCheckers,
   checkersMoves,
@@ -139,6 +140,8 @@ export function createExtraGames({
   let mounted = null,
     root = null,
     selected = -1,
+    checkerFocus = 40,
+    memoryFocus = 0,
     aiTimer = null,
     memoryTimer = null,
     studyTimer = null,
@@ -186,7 +189,7 @@ export function createExtraGames({
         heading(id, 'Think ahead. Make your move.') +
         '<div class="checkers-topline"><select id="checkers-mode" aria-label="Checkers opponent"><option value="computer">Vs computer</option><option value="local">Two players</option></select><span id="checkers-turn"></span></div><div class="board-wrap"><div id="checkers-board" class="checkers-board" role="group" aria-label="Checkers board. Arrow keys select. Enter chooses a piece or destination."></div><div class="board-overlay" id="extra-overlay" hidden></div></div><div class="game-tools">' +
         btn('undo', 'Undo', 'undo', 'id="checkers-undo"') +
-        '<span id="checkers-count" class="move-count"></span></div><p class="instructions">Choose a piece, then a highlighted square.<br>Captures are required. Keep jumping when you can.</p></section>'
+        '<span id="checkers-count" class="move-count"></span></div><p class="instructions">Ringed pieces can move. Choose one, then a highlighted square.<br>Captures are required. Keep jumping when you can.<br><kbd>Arrows</kbd> navigate · <kbd>Enter / Space</kbd> choose</p></section>'
       );
     if (id === 'blocks')
       return (
@@ -205,7 +208,7 @@ export function createExtraGames({
     return (
       '<section id="extra-game" aria-label="Memory game">' +
       heading(id, 'Study the cards. Remember the pairs.') +
-      '<div class="stats"><div class="stat"><span class="stat-label">GUESSES</span><span class="stat-value" id="memory-guesses"></span></div><div class="stat stat-best"><span class="stat-label">PAIRS FOUND</span><span class="stat-value" id="memory-pairs"></span></div></div><div class="board-wrap"><div class="memory-board" id="memory-board" role="group" aria-label="Memory cards"></div><div class="board-overlay" id="extra-overlay" hidden></div></div><div class="memory-caption" id="memory-caption" role="status"></div><p class="instructions">Remember the symbols, then find matching pairs.<br>Choose two cards each turn.</p></section>'
+      '<div class="stats"><div class="stat"><span class="stat-label">GUESSES</span><span class="stat-value" id="memory-guesses"></span></div><div class="stat stat-best"><span class="stat-label">PAIRS FOUND</span><span class="stat-value" id="memory-pairs"></span></div></div><div class="board-wrap"><div class="memory-board" id="memory-board" role="group" aria-label="Memory cards"></div><div class="board-overlay" id="extra-overlay" hidden></div></div><div class="memory-caption" id="memory-caption" role="status"></div><p class="instructions">Remember the symbols, then find matching pairs.<br>Choose two cards each turn.<br><kbd>Arrows</kbd> navigate · <kbd>Enter / Space</kbd> flip</p></section>'
     );
   }
   function overlay(html) {
@@ -218,9 +221,11 @@ export function createExtraGames({
     const s = state(),
       moves = checkersMoves(s),
       thinking = s.mode === 'computer' && s.turn === -1 && !s.result;
-    if (s.forced !== null) selected = s.forced;
-    const targets = moves.filter((m) => m.from === selected).map((m) => m.to),
-      sources = new Set(moves.map((m) => m.from));
+    if (thinking || s.result) selected = -1;
+    else if (s.forced !== null) selected = s.forced;
+    const targets = thinking ? [] : moves.filter((m) => m.from === selected).map((m) => m.to),
+      sources = new Set(thinking ? [] : moves.map((m) => m.from)),
+      mustCapture = moves.some((m) => m.capture !== null);
     const focused = root
         .querySelector('#checkers-board')
         .contains(document.activeElement),
@@ -231,6 +236,7 @@ export function createExtraGames({
           '<button class="checker-square ' +
           ((Math.floor(i / 8) + (i % 8)) % 2 ? 'dark-square' : 'light-square') +
           (selected === i ? ' selected' : '') +
+          (sources.has(i) ? ' movable' + (mustCapture ? ' capture-ready' : '') : '') +
           (targets.includes(i) ? ' legal' : '') +
           '" data-square="' +
           i +
@@ -248,7 +254,7 @@ export function createExtraGames({
               ? 'legal destination'
               : 'empty') +
           '" tabindex="' +
-          (i === (selected < 0 ? 40 : selected) ? 0 : -1) +
+          (i === (focused ? Number(focusIndex) : checkerFocus) ? 0 : -1) +
           '">' +
           (p
             ? '<span class="checker-piece ' +
@@ -274,7 +280,7 @@ export function createExtraGames({
         ? 'Thinking…'
         : s.forced !== null
           ? 'Keep jumping'
-          : (s.turn === 1 ? 'Coral' : 'Ink') + ' to move';
+          : (s.turn === 1 ? 'Coral' : 'Ink') + ' to move' + (mustCapture ? ' · Capture required' : '');
     root.querySelector('#checkers-undo').disabled = !s.history.length;
     root.querySelector('#checkers-count').textContent =
       s.board.filter((p) => p > 0).length +
@@ -634,6 +640,7 @@ export function createExtraGames({
     );
   }
   function chooseSquare(i) {
+    checkerFocus = i;
     const s = state();
     if (checkerMoving || s.result || (s.mode === 'computer' && s.turn === -1))
       return;
@@ -656,6 +663,7 @@ export function createExtraGames({
       return;
     }
     if (target.dataset.card !== undefined) {
+      memoryFocus = Number(target.dataset.card);
       const before = state();
       if (set(flipMemory(before, Number(target.dataset.card))))
         void sound.play(
@@ -684,16 +692,18 @@ export function createExtraGames({
       }, 3000);
     } else if (mounted === 'blocks') blockAction(action);
   }
-  function keydown(e) {
+  function keydown(e, target = e.target) {
     if (
+      suspended || e.isComposing ||
       e.altKey ||
       e.ctrlKey ||
       e.metaKey ||
-      e.target.closest('select') ||
+      target.closest('select') ||
       document.getElementById('confirm-dialog').open
     )
       return;
-    if (mounted === 'blocks' && e.target.closest('#extra-game')) {
+    if (mounted === 'blocks' && target.closest('#extra-game')) {
+      if (['Enter', ' '].includes(e.key) && target.closest('button')) return;
       const action =
         {
           ArrowLeft: 'left',
@@ -716,19 +726,30 @@ export function createExtraGames({
       }
     } else if (
       mounted === 'checkers' &&
-      e.target.dataset.square !== undefined
+      target.dataset.square !== undefined
     ) {
-      let i = Number(e.target.dataset.square),
+      let i = Number(target.dataset.square),
         next = i;
       if (e.key === 'ArrowLeft' && i % 8) next--;
       if (e.key === 'ArrowRight' && i % 8 < 7) next++;
       if (e.key === 'ArrowUp' && i >= 8) next -= 8;
       if (e.key === 'ArrowDown' && i < 56) next += 8;
-      if (next !== i) {
+      if (e.key.startsWith('Arrow')) {
         e.preventDefault();
+        checkerFocus = next;
         root
           .querySelector('[data-square="' + next + '"]')
           ?.focus({ preventScroll: true });
+      }
+    } else if (mounted === 'memory' && target.dataset.card !== undefined && e.key.startsWith('Arrow')) {
+      e.preventDefault();
+      const index = Number(target.dataset.card), step = {ArrowLeft:-1,ArrowRight:1,ArrowUp:-4,ArrowDown:4}[e.key];
+      if (step === undefined) return;
+      let next = index + step;
+      while (next >= 0 && next < 16 && (Math.abs(step) === 4 || Math.floor(next/4) === Math.floor(index/4))) {
+        const card = root.querySelector('[data-card="' + next + '"]');
+        if (!card.disabled) { memoryFocus = next; card.focus({preventScroll:true}); break; }
+        next += step;
       }
     }
   }
@@ -744,13 +765,24 @@ export function createExtraGames({
     if (Object.hasOwn(QUICK_NAMES, id)) { quick.mount(id); return; }
     mounted = id;
     root = document.getElementById('extra-game');
-    selected = -1;
+    selected = -1; checkerFocus = 40; memoryFocus = 0;
     suspended = false;
     if (id === 'memory' && state().phase === 'study')
       getSave().games[id] = { ...state(), phase: 'ready' };
     if (id === 'blocks') getSave().games[id] = { ...state(), paused: true };
     root.addEventListener('click', click);
-    root.addEventListener('keydown', keydown);
+    const unbindKeyboard = bindGameKeyboard({
+      area: id === 'blocks' ? '#extra-game' : id === 'checkers' ? '#checkers-board' : '#memory-board',
+      focus, onKey: keydown, blocked: () => suspended || document.getElementById('confirm-dialog').open,
+      keys: e => e.key.startsWith('Arrow') || ['Enter', ' '].includes(e.key) || (mounted === 'blocks' && /^[xzcp]$/i.test(e.key)),
+    });
+    const focusin = e => {
+      if (e.target.dataset.square !== undefined) { checkerFocus = Number(e.target.dataset.square); root.querySelectorAll('[data-square]').forEach(node => {node.tabIndex = node === e.target ? 0 : -1;}); }
+      if (e.target.dataset.card !== undefined) memoryFocus = Number(e.target.dataset.card);
+    };
+    root.addEventListener('focus', focusin, true);
+    const element = root;
+    cleanup.push(() => { unbindKeyboard(); element.removeEventListener('click', click); element.removeEventListener('focus', focusin, true); });
     const change = (e) => {
       if (e.target.id === 'checkers-mode') onNew('checkers', e.target.value);
     };
@@ -794,6 +826,10 @@ export function createExtraGames({
     if (sokoban.isMounted()) { sokoban.focus(); return; }
     if (more.isMounted()) { more.focus(); return; }
     if (quick.isMounted()) { quick.focus(); return; }
+    const overlay = root?.querySelector('#extra-overlay');
+    if (overlay && !overlay.hidden) { overlay.querySelector('button')?.focus({preventScroll:true}); return; }
+    const remembered = root?.querySelector(mounted === 'checkers' ? '[data-square="' + checkerFocus + '"]' : '[data-card="' + memoryFocus + '"]:not(:disabled)');
+    if (mounted !== 'blocks' && remembered) { remembered.focus({preventScroll:true}); return; }
     root
       ?.querySelector(
         mounted === 'blocks'

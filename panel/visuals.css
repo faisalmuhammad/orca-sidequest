@@ -840,6 +840,31 @@
   border: 2px solid #ffffff18;
   position: relative;
 }
+/* Show all playable pieces before selection; dashed gold rings mark captures. */
+.checker-square.movable .checker-piece::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid #b0f3da;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #154b3dcc;
+  pointer-events: none;
+}
+.checker-square.capture-ready .checker-piece::after {
+  border-color: #ffe1a5;
+  border-style: dashed;
+  box-shadow: 0 0 0 1px #714923cc;
+}
+.checker-square.selected .checker-piece::after {
+  border-style: solid;
+  border-color: #fff4c9;
+}
+.checkers-board:has(.checker-square.selected) .checker-square.movable:not(.selected) .checker-piece::after {
+  opacity: 0.28;
+}
+#checkers-board[aria-busy='true'] .checker-piece::after {
+  opacity: 0;
+}
 .checker-piece i {
   position: absolute;
   inset: 3px;

@@ -88,7 +88,7 @@ if (!process.argv.includes('--extras')) {
 await seed(emptySave());
 await layout('game picker');
 await screenshot('picker-preview');
-assert.equal(await evaluate(`document.querySelectorAll('.game-card').length`),12);
+assert.equal(await evaluate(`document.querySelectorAll('.game-card').length`),15);
 assert.equal(await evaluate(`document.querySelector('[data-action="library-view"]').nextElementSibling.id`),'sound-button');
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('game-library')).gridTemplateColumns.split(' ').length`),2);
 const compactHeight=await evaluate(`document.getElementById('game-library').getBoundingClientRect().height`);
@@ -100,7 +100,7 @@ assert.equal(await evaluate(`document.getElementById('app').dataset.libraryView`
 await screenshot('picker-expanded-preview');
 await click('Compact game view');
 assert.equal((await readSave()).preferences.libraryView,'compact');
-console.log('Passed: header view toggle, twelve cards, compact density and saved expanded preference');
+console.log('Passed: header view toggle, fifteen cards, compact density and saved expanded preference');
 
 const blocks = { ...create2048(), board: [2,2,...Array(14).fill(0)] };
 await seed({ ...emptySave(), activeGame: '2048', games: { '2048': blocks, sudoku: null } });
@@ -363,7 +363,7 @@ console.log('Passed: Codebreaker keyboard entry, draft recovery, duplicate feedb
 const slideBoard=[1,2,3,4,5,6,0,7,8],slide={...createSliding(),board:slideBoard,initial:slideBoard};
 await seed({...emptySave(),activeGame:'sliding',games:{...emptySave().games,sliding:slide}});
 await evaluate(`(() => { document.getElementById('sliding-board').focus(); return true; })()`);
-await key('ArrowRight');assert.equal((await readSave()).games.sliding.moves,1);
+await key('ArrowLeft');assert.equal((await readSave()).games.sliding.moves,1);
 await layout('Sliding Puzzle');await screenshot('sliding-preview');
 await reload();await act('wait','--selector','#sliding-board');
 assert.deepEqual((await readSave()).games.sliding.board,[1,2,3,4,5,6,7,0,8]);
