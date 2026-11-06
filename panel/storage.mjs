@@ -1,5 +1,5 @@
 export const SAVE_KEY = 'sidequest.v1';
-export const emptySave = () => ({ version: 1, updatedAt: 0, activeGame: null, games: { '2048': null, sudoku: null, checkers: null, blocks: null, memory: null, minesweeper: null, lights: null, nonograms: null, codebreaker: null, sliding: null, connect: null, sokoban: null }, preferences: { sound: false, numberFirst: false, libraryView: 'compact' } });
+export const emptySave = () => ({ version: 1, updatedAt: 0, activeGame: null, games: { '2048': null, sudoku: null, checkers: null, blocks: null, memory: null, minesweeper: null, lights: null, nonograms: null, codebreaker: null, sliding: null, connect: null, sokoban: null, wordle: null, simon: null, flood: null }, preferences: { sound: false, numberFirst: false, libraryView: 'compact', sortOrder: 'recommended' }, lastPlayed: {} });
 
 export function normalizeSave(value, validators) {
   const save = emptySave();
@@ -10,6 +10,13 @@ export function normalizeSave(value, validators) {
   save.preferences.sound = value.preferences?.sound === true;
   save.preferences.numberFirst = value.preferences?.numberFirst === true;
   save.preferences.libraryView = value.preferences?.libraryView === 'expanded' ? 'expanded' : 'compact';
+  save.preferences.sortOrder = ['recommended','recent','alpha','category'].includes(value.preferences?.sortOrder) ? value.preferences.sortOrder : 'recommended';
+  if (value.lastPlayed && typeof value.lastPlayed === 'object') {
+    for (const key of Object.keys(save.games)) {
+      const ts = value.lastPlayed[key];
+      if (Number.isSafeInteger(ts) && ts > 0) save.lastPlayed[key] = ts;
+    }
+  }
   for (const game of Object.keys(save.games)) {
     if (value.games[game] == null) continue;
     if (validators[game]?.(value.games[game])) save.games[game] = value.games[game];

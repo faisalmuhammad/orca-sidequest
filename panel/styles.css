@@ -83,11 +83,13 @@ svg { flex-shrink: 0; width: 16px; height: 16px; }
 .card-arrow { margin-left: auto; color: var(--quiet); }
 .card-meta { display: flex; justify-content: space-between; gap: 5px; margin-top: 11px; font-size: 10px; color: var(--quiet); }
 .card-state { color: var(--teal); font-weight: 550; }
-.home-footer { text-align: center; margin-top: 18px; color: var(--quiet); font-size: 10px; line-height: 1.6; }
 .game-nav { display: flex; align-items: center; gap: 8px; padding: 14px 0 17px; }
 .back-button { display: flex; align-items: center; gap: 4px; padding: 4px 0; border: 0; background: none; font-size: 11px; color: var(--quiet); }
 .back-button svg { width: 13px; height: 13px; }
 .game-select { margin-left: auto; max-width: 140px; padding: 5px 24px 5px 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--fg); background-color: var(--card); font-size: 11px; }
+.sort-select { margin-left: auto; max-width: 140px; padding: 5px 24px 5px 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--fg); background-color: var(--card); font-size: 10px; }
+.category-label { grid-column: 1 / -1; padding: 16px 0 4px; font-size: 10px; font-weight: 650; letter-spacing: .8px; color: var(--quiet); border-top: 1px solid var(--line); }
+.category-label:first-child { border-top: none; padding-top: 0; }
 .game-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 13px; }
 .game-heading h1 { font-size: 26px; font-weight: 750; line-height: 1; letter-spacing: -1px; }
 .game-heading .subtitle { color: var(--quiet); font-size: 10px; margin-top: 7px; line-height: 1.4; }

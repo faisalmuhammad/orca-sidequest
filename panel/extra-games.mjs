@@ -37,9 +37,9 @@ export const EXTRA_CREATORS = {
   sokoban: createSokoban,
 };
 export function extraCards(games, icon) {
-  return Object.entries(EXTRA_NAMES)
+  const own = Object.entries(EXTRA_NAMES)
     .filter(([id]) => id !== 'sokoban' && !Object.hasOwn(QUICK_NAMES, id) && !Object.hasOwn(MORE_NAMES, id))
-    .map(([id, name], i) => {
+    .map(([id, name]) => {
       const state = games[id],
         meta =
           id === 'checkers'
@@ -87,7 +87,9 @@ export function extraCards(games, icon) {
               '</span><span>' +
               icon('spark') +
               '</span></div>';
-      return (
+      return {
+        id,
+        html:
         '<button class="game-card" data-game="' +
         id +
         '" aria-label="' +
@@ -95,9 +97,7 @@ export function extraCards(games, icon) {
         name +
         '"><div class="card-preview preview-' +
         id +
-        '" aria-hidden="true"><span class="card-kicker">0' +
-        (i + 3) +
-        ' / ' +
+        '" aria-hidden="true"><span class="card-kicker">/ ' +
         {
           checkers: 'THINK A MOVE AHEAD',
           blocks: 'FIND YOUR RHYTHM',
@@ -121,9 +121,9 @@ export function extraCards(games, icon) {
         (state ? 'Resume' : 'Play') +
         icon('play') +
         '</span></div></div></button>'
-      );
-    })
-    .join('') + quickCards(games, icon) + moreCards(games, icon) + sokobanCard(games, icon);
+      };
+    });
+  return [...own, ...quickCards(games, icon), ...moreCards(games, icon), ...sokobanCard(games, icon)];
 }
 export function createExtraGames({
   getSave,

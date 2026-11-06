@@ -1,7 +1,7 @@
 /* The library keeps the same artwork in either density. */
 .brand-copy { min-width: 0; }
 .brand-description { white-space: nowrap; }
-.library-caption { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 10px; color: var(--quiet); }
+.library-caption { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 10px; color: var(--quiet); }
 .library-caption span:first-child { font-weight: 650; color: var(--fg); }
 #app[data-library-view='compact'] .welcome { padding: 18px 0 17px; }
 #app[data-library-view='compact'] .welcome .eyebrow,

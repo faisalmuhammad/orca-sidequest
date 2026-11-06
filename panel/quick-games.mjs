@@ -13,8 +13,8 @@ export function quickCards(games, icon) {
     const art = id === 'minesweeper'
       ? `<div class="mini-mines">${[0,1,0,-1,0,2,1,0,1,0,0,-1,0,0,1,0].map(n => `<span class="${n === -1 ? 'mini-flag' : n === 0 ? 'mini-covered' : ''}">${n === -1 ? icon('flag') : n || ''}</span>`).join('')}</div>`
       : `<div class="mini-lights">${[0,1,0,1,1,1,0,1,0].map(n => `<span class="${n ? 'on' : ''}"><i></i></span>`).join('')}</div>`;
-    return `<button class="game-card" data-game="${id}" aria-label="${status === 'Done' ? 'Open' : status} ${name}"><div class="card-preview preview-${id}" aria-hidden="true"><span class="card-kicker">0${i + 6} / ${id === 'minesweeper' ? 'FOLLOW THE CLUES' : 'A SPARK OF LOGIC'}</span><div class="art-orbit orbit-one"></div>${art}<span class="art-spark spark-one">✦</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">${name}</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">${id === 'minesweeper' ? 'Trust the numbers. Find the safe path.' : 'Clear your mind. Turn down the lights.'}</p><div class="card-meta"><span>${meta}</span><span class="card-state">${status}${icon('play')}</span></div></div></button>`;
-  }).join('');
+    return { id, html: `<button class="game-card" data-game="${id}" aria-label="${status === 'Done' ? 'Open' : status} ${name}"><div class="card-preview preview-${id}" aria-hidden="true"><span class="card-kicker">/ ${id === 'minesweeper' ? 'FOLLOW THE CLUES' : 'A SPARK OF LOGIC'}</span><div class="art-orbit orbit-one"></div>${art}<span class="art-spark spark-one">✦</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">${name}</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">${id === 'minesweeper' ? 'Trust the numbers. Find the safe path.' : 'Clear your mind. Turn down the lights.'}</p><div class="card-meta"><span>${meta}</span><span class="card-state">${status}${icon('play')}</span></div></div></button>` };
+  });
 }
 
 export function createQuickGames({ getSave, persist, sound, icon, announce, onNew }) {

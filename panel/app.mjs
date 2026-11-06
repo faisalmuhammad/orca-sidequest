@@ -13,6 +13,9 @@ import { isValidCodebreaker } from './games/codebreaker.mjs';
 import { isValidSliding } from './games/sliding.mjs';
 import { isValidConnect } from './games/connect.mjs';
 import { isValidSokoban, isSokobanComplete } from './games/sokoban.mjs';
+import { isValidWordle } from './games/wordle.mjs';
+import { isValidSimon } from './games/simon.mjs';
+import { isValidFlood } from './games/flood.mjs';
 
 const app = document.getElementById('app');
 const announcer = document.getElementById('announcer');
@@ -51,6 +54,9 @@ const paths = {
 };
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
 const format = value => value.toLocaleString();
+const ALL_NAMES = { '2048': '2048', sudoku: 'Sudoku', ...EXTRA_NAMES };
+const RECOMMENDED_ORDER = ['2048','sudoku','checkers','blocks','memory','minesweeper','lights','nonograms','codebreaker','sliding','connect','sokoban','wordle','simon','flood'];
+const CATEGORIES = [['Strategy',['2048','checkers','connect']],['Puzzle',['sudoku','nonograms','sliding','lights','sokoban','flood']],['Word & Logic',['wordle','codebreaker','minesweeper']],['Action & Memory',['blocks','memory','simon']]];
 const duration = milliseconds => {
   const seconds = Math.floor(milliseconds / 1000);
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -114,11 +120,35 @@ function renderHome() {
   const progress = sudoku ? `${sudoku.values.filter(Boolean).length}/81 filled · ${duration(sudoku.elapsedMs)}` : 'Notes, hints & three difficulties';
   const blocksAction = blocks?.moves ? 'Resume game' : 'Play 2048';
   const sudokuAction = sudoku ? (isSudokuComplete(sudoku) ? 'Puzzle completed' : 'Resume puzzle') : 'Play Sudoku';
-  return `<section class="welcome"><span class="eyebrow"><i class="live-spark"></i> BETWEEN TASKS</span><h1>Your next <br><span>quick break.</span></h1><p>Quick games, right where you work.</p><div class="hero-orbit" aria-hidden="true">${icon('spark')}</div></section>
-    <div class="library-caption"><span>Your games</span><span>${2 + Object.keys(EXTRA_NAMES).length} to explore</span></div><div class="game-list" id="game-library">
-      <button class="game-card" data-game="2048" aria-label="${blocksAction}"><div class="card-preview preview-2048" aria-hidden="true"><span class="card-kicker">01 / MERGE & MULTIPLY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-tiles">${[8,32,128,256].map(value => `<span class="preview-tile">${value}<i></i></span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">2048</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Find your flow. Chase the next merge.</p><div class="card-meta"><span>${blocks ? `Best ${format(blocks.best)}` : 'Strategy meets serendipity'}</span><span class="card-state">${blocks?.moves ? 'Resume' : 'Play'}${icon('play')}</span></div></div></button>
-      <button class="game-card" data-game="sudoku" aria-label="${sudokuAction}"><div class="card-preview preview-sudoku" aria-hidden="true"><span class="card-kicker">02 / A LITTLE CLARITY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-grid">${[5,0,3,0,7,0,2,0,9].map(value => `<span>${value || '<i></i>'}</span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">Sudoku</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Clear the grid, one number at a time.</p><div class="card-meta"><span>${progress}</span><span class="card-state">${sudoku ? (isSudokuComplete(sudoku) ? 'Done' : 'Resume') : 'Play'}${icon('play')}</span></div></div></button>
-    ${extraCards(save.games, icon)}</div><p class="home-footer">${icon('game')} Refresh your mind with a quick game while your agents work.</p>`;
+  const card2048 = { id: '2048', html: `<button class="game-card" data-game="2048" aria-label="${blocksAction}"><div class="card-preview preview-2048" aria-hidden="true"><span class="card-kicker">/ MERGE & MULTIPLY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-tiles">${[8,32,128,256].map(value => `<span class="preview-tile">${value}<i></i></span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">2048</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Find your flow. Chase the next merge.</p><div class="card-meta"><span>${blocks ? `Best ${format(blocks.best)}` : 'Strategy meets serendipity'}</span><span class="card-state">${blocks?.moves ? 'Resume' : 'Play'}${icon('play')}</span></div></div></button>` };
+  const cardSudoku = { id: 'sudoku', html: `<button class="game-card" data-game="sudoku" aria-label="${sudokuAction}"><div class="card-preview preview-sudoku" aria-hidden="true"><span class="card-kicker">/ A LITTLE CLARITY</span><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="preview-grid">${[5,0,3,0,7,0,2,0,9].map(value => `<span>${value || '<i></i>'}</span>`).join('')}</div><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">+</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">Sudoku</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">Clear the grid, one number at a time.</p><div class="card-meta"><span>${progress}</span><span class="card-state">${sudoku ? (isSudokuComplete(sudoku) ? 'Done' : 'Resume') : 'Play'}${icon('play')}</span></div></div></button>` };
+  const allCards = [card2048, cardSudoku, ...extraCards(save.games, icon)];
+  const order = save.preferences.sortOrder;
+  let sorted;
+  if (order === 'alpha') {
+    sorted = allCards.slice().sort((a, b) => ALL_NAMES[a.id].localeCompare(ALL_NAMES[b.id]));
+  } else if (order === 'recent') {
+    sorted = allCards.slice().sort((a, b) => {
+      const ta = save.lastPlayed[a.id] ?? 0, tb = save.lastPlayed[b.id] ?? 0;
+      if (ta || tb) return tb - ta;
+      return RECOMMENDED_ORDER.indexOf(a.id) - RECOMMENDED_ORDER.indexOf(b.id);
+    });
+  } else if (order === 'category') {
+    sorted = [];
+    for (const [label, ids] of CATEGORIES) {
+      const group = ids.map(gid => allCards.find(c => c.id === gid)).filter(Boolean);
+      if (group.length) {
+        sorted.push({ id: '_cat_' + label, html: `<div class="category-label">${label}</div>` });
+        sorted.push(...group);
+      }
+    }
+  } else {
+    sorted = allCards.slice().sort((a, b) => RECOMMENDED_ORDER.indexOf(a.id) - RECOMMENDED_ORDER.indexOf(b.id));
+  }
+  const sortOptions = [['recommended','Recommended'],['recent','Recently played'],['alpha','A–Z'],['category','Category']];
+  return `<section class="welcome"><span class="eyebrow"><i class="live-spark"></i> BETWEEN TASKS</span><h1>Your next <br><span>quick break.</span></h1><p>Refresh your mind with a quick game while your agents work.</p><div class="hero-orbit" aria-hidden="true">${icon('spark')}</div></section>
+    <div class="library-caption"><span>${2 + Object.keys(EXTRA_NAMES).length} to explore</span><select id="sort-select" class="sort-select" aria-label="Sort games">${sortOptions.map(([v,l])=>`<option value="${v}" ${save.preferences.sortOrder===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="game-list" id="game-library">
+    ${sorted.map(c => c.html).join('\n      ')}</div>`;
 }
 
 function gameNav() {
@@ -282,6 +312,7 @@ function switchGame(game) {
   checkpointClock(); clockStart = null;
   extras.dispose();
   if (game && !save.games[game]) save.games[game] = game === '2048' ? create2048() : game === 'sudoku' ? createSudoku() : EXTRA_CREATORS[game]();
+  if (game) save.lastPlayed[game] = Date.now();
   save.activeGame = game;
   checked = false; message = ''; messageTone = '';
   if (game === 'sudoku') selected = Math.max(0, save.games.sudoku.values.findIndex(value => !value));
@@ -322,7 +353,7 @@ function enterNumber(value) {
 }
 function confirmNew(game, difficulty) {
   const state = save.games[game];
-  const hasProgress = game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : game === 'minesweeper' ? state.started || state.flags.some(Boolean) : ['lights','nonograms','sliding','connect','sokoban'].includes(game) ? state.moves > 0 : game === 'codebreaker' ? state.guesses.length > 0 || state.draft.some(n => n !== null) : state.attempts > 0 || state.phase === 'play';
+  const hasProgress = game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : game === 'minesweeper' ? state.started || state.flags.some(Boolean) : ['lights','nonograms','sliding','connect','sokoban'].includes(game) ? state.moves > 0 : game === 'codebreaker' ? state.guesses.length > 0 || state.draft.some(n => n !== null) : game === 'wordle' ? state.guesses.length > 0 || state.draft.length > 0 : game === 'simon' ? state.round > 1 || state.input.length > 0 : game === 'flood' ? state.moves > 0 : state.attempts > 0 || state.phase === 'play';
   const start = () => {
     clockStart = null;
     extras.dispose();
@@ -388,6 +419,7 @@ app.addEventListener('click', event => {
 app.addEventListener('change', event => {
   if (event.target.id === 'game-select') switchGame(event.target.value);
   if (event.target.id === 'difficulty-select') { const value = event.target.value; event.target.value = save.games.sudoku.difficulty; confirmNew('sudoku', value); }
+  if (event.target.id === 'sort-select') { save.preferences.sortOrder = event.target.value; persist(); render(); document.getElementById('sort-select')?.focus({ preventScroll: true }); }
 });
 app.addEventListener('keydown', event => {
   if (dialog.open || event.altKey || event.target.closest('select')) return;
@@ -438,7 +470,7 @@ setInterval(() => {
 }, 1000);
 
 try {
-  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory, minesweeper:isValidMinesweeper, lights:isValidLights, nonograms:isValidNonogram, codebreaker:isValidCodebreaker, sliding:isValidSliding, connect:isValidConnect, sokoban:isValidSokoban });
+  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory, minesweeper:isValidMinesweeper, lights:isValidLights, nonograms:isValidNonogram, codebreaker:isValidCodebreaker, sliding:isValidSliding, connect:isValidConnect, sokoban:isValidSokoban, wordle:isValidWordle, simon:isValidSimon, flood:isValidFlood });
   save = restored.save; initialized = true;
   if (save.activeGame === 'sudoku') selected = Math.max(0, save.games.sudoku.values.findIndex(value => !value));
   render();

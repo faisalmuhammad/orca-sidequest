@@ -2,33 +2,45 @@ import { NONOGRAM_DIFFICULTIES, createNonogram, nonogramClues, nonogramClue, mar
 import { CODE_COLORS, createCodebreaker, enterCode, submitCode } from './games/codebreaker.mjs';
 import { SLIDING_DIFFICULTIES, createSliding, slideTile, undoSliding, isSlidingComplete } from './games/sliding.mjs';
 import { createConnect, dropConnect, undoConnect, chooseConnectColumn, connectWinningCells, connectColumns } from './games/connect.mjs';
+import { createWordle, enterLetter, deleteLetter, submitGuess, WORDLE_VALID } from './games/wordle.mjs';
+import { createSimon, tapSimon, startPlayPhase } from './games/simon.mjs';
+import { FLOOD_DIFFICULTIES, FLOOD_COLORS, createFlood, pickFlood, floodRegion } from './games/flood.mjs';
 import { celebration } from './effects.mjs';
-export const MORE_NAMES={nonograms:'Nonograms',codebreaker:'Codebreaker',sliding:'Sliding Puzzle',connect:'Connect Four'};
-export const MORE_CREATORS={nonograms:createNonogram,codebreaker:createCodebreaker,sliding:createSliding,connect:createConnect};
+export const MORE_NAMES={nonograms:'Nonograms',codebreaker:'Codebreaker',sliding:'Sliding Puzzle',connect:'Connect Four',wordle:'Wordle',simon:'Simon',flood:'Flood Fill'};
+export const MORE_CREATORS={nonograms:createNonogram,codebreaker:createCodebreaker,sliding:createSliding,connect:createConnect,wordle:createWordle,simon:createSimon,flood:createFlood};
 const codeSymbols=['spark','star','leaf','target','moon','bolt'];
 const codePeg=(color,icon)=>`<span class="code-peg" role="img" aria-label="${color===null?'Empty':CODE_COLORS[color]} symbol" data-color="${color===null?'empty':color}">${color===null?'':icon(codeSymbols[color])}</span>`;
 export function moreCards(games,icon) {
-  const descriptions={nonograms:'Follow the clues. Reveal a picture.',codebreaker:'Read the feedback. Crack the sequence.',sliding:'One empty space. A little order.',connect:'Think ahead. Connect your next four.'};
-  const kickers={nonograms:'PICTURE THE POSSIBILITIES',codebreaker:'A COLORFUL MYSTERY',sliding:'MAKE A LITTLE SPACE',connect:'FOUR IN A ROW'};
+  const descriptions={nonograms:'Follow the clues. Reveal a picture.',codebreaker:'Read the feedback. Crack the sequence.',sliding:'One empty space. A little order.',connect:'Think ahead. Connect your next four.',wordle:'Five letters. Six tries. One word.',simon:'Watch. Remember. Repeat the pattern.',flood:'Fill the board in limited moves.'};
+  const kickers={nonograms:'PICTURE THE POSSIBILITIES',codebreaker:'A COLORFUL MYSTERY',sliding:'MAKE A LITTLE SPACE',connect:'FOUR IN A ROW',wordle:'GUESS THE WORD',simon:'FOLLOW THE SEQUENCE',flood:'ONE COLOR AT A TIME'};
   return Object.entries(MORE_NAMES).map(([id,name],i)=>{
     const s=games[id],done=s&&(s.result||(id==='nonograms'&&isNonogramComplete(s))||(id==='sliding'&&isSlidingComplete(s)));
-    const progress=s&&(id==='codebreaker'?s.guesses.length>0||s.draft.some(n=>n!==null):s.moves>0),status=done?'Done':progress?'Resume':'Play';
-    const meta=!s?'A fresh puzzle awaits':id==='codebreaker'?`${s.guesses.length}/10 guesses`:id==='connect'?`${s.moves} pieces played`:`${s.moves} moves`;
-    const art=id==='nonograms'?`<div class="mini-nonogram">${'0101011111111110111000100'.split('').map(n=>`<i class="${n==='1'?'filled':''}"></i>`).join('')}</div>`:id==='codebreaker'?`<div class="mini-code">${[0,2,3,4].map(n=>codePeg(n,icon)).join('')}</div>`:id==='sliding'?`<div class="mini-sliding">${[1,2,3,4,0,6,7,5,8].map(n=>`<span class="${n?'':'empty'}">${n||''}</span>`).join('')}</div>`:`<div class="mini-connect">${[0,0,0,0,0,0,1,0,0,0,1,-1,0,1,-1,1,1,-1,-1,1].map(n=>`<i data-player="${n}"></i>`).join('')}</div>`;
-    return `<button class="game-card" data-game="${id}" aria-label="${status==='Done'?'Open':status} ${name}"><div class="card-preview preview-${id}" aria-hidden="true"><span class="card-kicker">${String(i+8).padStart(2,'0')} / ${kickers[id]}</span>${art}<span class="art-spark spark-one">✦</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">${name}</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">${descriptions[id]}</p><div class="card-meta"><span>${meta}</span><span class="card-state">${status}${icon('play')}</span></div></div></button>`;
-  }).join('');
+    const progress=s&&(id==='codebreaker'?s.guesses.length>0||s.draft.some(n=>n!==null):id==='wordle'?s.guesses.length>0||s.draft.length>0:id==='simon'?s.round>1||s.input.length>0:id==='flood'?s.moves>0:s.moves>0),status=done?'Done':progress?'Resume':'Play';
+    const meta=!s?'A fresh puzzle awaits':id==='codebreaker'?`${s.guesses.length}/10 guesses`:id==='wordle'?`${s.guesses.length}/6 guesses`:id==='connect'?`${s.moves} pieces played`:id==='simon'?`Round ${s.round}`:id==='flood'?`${s.moves}/${s.maxMoves} moves`:`${s.moves} moves`;
+    const art=id==='nonograms'?`<div class="mini-nonogram">${'0101011111111110111000100'.split('').map(n=>`<i class="${n==='1'?'filled':''}"></i>`).join('')}</div>`:id==='codebreaker'?`<div class="mini-code">${[0,2,3,4].map(n=>codePeg(n,icon)).join('')}</div>`:id==='sliding'?`<div class="mini-sliding">${[1,2,3,4,0,6,7,5,8].map(n=>`<span class="${n?'':'empty'}">${n||''}</span>`).join('')}</div>`:id==='wordle'?`<div class="mini-wordle">${'crane'.split('').map((ch,j)=>`<span class="${['correct','present','absent','absent','correct'][j]}">${ch}</span>`).join('')}</div>`:id==='connect'?`<div class="mini-connect">${[0,0,0,0,0,0,1,0,0,0,1,-1,0,1,-1,1,1,-1,-1,1].map(n=>`<i data-player="${n}"></i>`).join('')}</div>`:id==='simon'?`<div class="mini-simon"><span data-pad="0"></span><span data-pad="1"></span><span data-pad="2" class="lit"></span><span data-pad="3"></span></div>`:id==='flood'?`<div class="mini-flood">${[0,0,1,1,0,0,2,3,0,1,1,3,2,2,3,3].map(c=>`<i data-color="${c}"></i>`).join('')}</div>`:'';
+    return { id, html: `<button class="game-card" data-game="${id}" aria-label="${status==='Done'?'Open':status} ${name}"><div class="card-preview preview-${id}" aria-hidden="true"><span class="card-kicker">/ ${kickers[id]}</span>${art}<span class="art-spark spark-one">✦</span></div><div class="card-info"><div class="card-title-line"><span class="card-title">${name}</span><span class="card-arrow">${icon('arrow')}</span></div><p class="card-description">${descriptions[id]}</p><div class="card-meta"><span>${meta}</span><span class="card-state">${status}${icon('play')}</span></div></div></button>` };
+  });
 }
 export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
-  let mounted=null,root=null,crossMode=false,cursor=0,suspended=false,moving=false,motion=0,animations=[],aiTimer=null,cleanup=[];
+  let mounted=null,root=null,crossMode=false,cursor=0,suspended=false,moving=false,motion=0,animations=[],aiTimer=null,watchTimer=null,watchToken=0,cleanup=[];
   const state=()=>getSave().games[mounted];
   const btn=(action,label,symbol='',attrs='')=>`<button type="button" class="button" data-more="${action}" ${attrs}>${symbol?icon(symbol):''}${label}</button>`;
   const options=(id,s)=>`<div class="quick-options"><select id="more-difficulty" aria-label="${MORE_NAMES[id]} difficulty">${Object.entries(id==='nonograms'?NONOGRAM_DIFFICULTIES:SLIDING_DIFFICULTIES).map(([key,rule])=>`<option value="${key}" ${s.difficulty===key?'selected':''}>${rule.label}</option>`).join('')}</select><span class="quick-difficulty-note">${id==='nonograms'?'One unique picture':'Every board is solvable'}</span></div>`;
   function render(id) {
-    const s=getSave().games[id],subtitle={nonograms:'A hidden picture, one square at a time.',codebreaker:'Four symbols. One hidden sequence.',sliding:'Make space. Bring things into place.',connect:'A small move can start a big connection.'}[id];
-    const header=`<section id="more-game" class="quick-game ${id}-game" aria-label="${MORE_NAMES[id]} game"><div class="game-heading"><div><h1>${MORE_NAMES[id]}</h1><p class="subtitle">${subtitle}</p></div>${btn('new','New','plus')}</div>`;
+    const s=getSave().games[id],subtitle={nonograms:'A hidden picture, one square at a time.',codebreaker:'Four symbols. One hidden sequence.',sliding:'Make space. Bring things into place.',connect:'A small move can start a big connection.',wordle:'Five letters. Six tries. One word.',simon:'Watch closely. Repeat what you see.',flood:'Cover the board in a single color.'}[id];
+    const header=`<section id="more-game" class="quick-game ${id}-game" aria-label="${MORE_NAMES[id]} game"><div class="game-heading"><div><h1>${MORE_NAMES[id]}</h1><p class="subtitle">${subtitle||''}</p></div>${btn('new','New','plus')}</div>`;
+    if(id==='simon') return `${header}<div class="stats"><div class="stat"><span class="stat-label">ROUND</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">BEST</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="simon-board" role="group" aria-label="Simon pads">${[0,1,2,3].map(p=>`<button type="button" class="simon-pad" data-pad="${p}" aria-label="Pad ${p+1}">${p+1}</button>`).join('')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><p class="quick-feedback" id="simon-feedback">Watch the pattern…</p><p class="quick-best" id="more-best"></p><p class="instructions">Watch the sequence, then tap the pads in order.<br><kbd>1–4</kbd> tap pads</p></section>`;
+    if(id==='flood') {
+      const floodOpts=`<div class="quick-options"><select id="more-difficulty" aria-label="Flood Fill difficulty">${Object.entries(FLOOD_DIFFICULTIES).map(([key,rule])=>`<option value="${key}" ${s.difficulty===key?'selected':''}>${rule.label}</option>`).join('')}</select><span class="quick-difficulty-note">Fewer moves is better</span></div>`;
+      return `${header}${floodOpts}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">REMAINING</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="flood-board" id="flood-board" role="group" aria-label="Flood Fill board" style="--grid-size:${s.size}"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="flood-palette" role="group" aria-label="Color picker">${FLOOD_COLORS.map((name,i)=>`<button type="button" class="flood-color" data-flood="${i}" aria-label="${name}, color ${i+1}"><span>${i+1}</span></button>`).join('')}</div><p class="quick-feedback" id="flood-feedback">Pick a color to flood from the top-left corner.</p><p class="quick-best" id="more-best"></p><p class="instructions">Pick a color. The flood spreads from the top-left corner.<br><kbd>1–6</kbd> choose color</p></section>`;
+    }
     if(id==='nonograms') return `${header}${options(id,s)}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">SQUARES FILLED</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="nonogram-layout" style="--grid-size:${s.size}"><div class="nonogram-corner" aria-hidden="true">${icon('game')}</div><div id="nonogram-columns" class="nonogram-columns" aria-label="Column clues"></div><div id="nonogram-rows" class="nonogram-rows" aria-label="Row clues"></div><div id="nonogram-board" class="nonogram-board" role="group" aria-label="Nonogram picture grid"></div></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="quick-tools"><div class="mine-input-mode" role="group" aria-label="Square action">${btn('fill-mode','Fill','pencil','id="nono-fill" aria-pressed="true"')}${btn('cross-mode','Cross','close','id="nono-cross" aria-pressed="false"')}</div>${btn('undo','Undo','undo','id="more-undo"')}</div><p class="quick-feedback">Clues describe runs of filled squares.<br>Leave at least one space between each run.</p><p class="quick-best" id="more-best"></p><p class="instructions">Tap to fill. Right-click or use Cross to mark a gap.<br><kbd>Arrows</kbd> navigate · <kbd>Enter</kbd> fill · <kbd>X</kbd> cross</p></section>`;
     if(id==='codebreaker') return `${header}<div class="code-secret" id="code-secret" aria-label="Hidden sequence"></div><div class="code-rules">Six symbols · repeats allowed · ten guesses</div><div class="code-log" id="code-log" role="log" aria-label="Submitted guesses"></div><div class="board-wrap"><div class="code-input"><div class="code-draft" id="code-draft" role="group" aria-label="Your guess"></div><div class="code-palette">${CODE_COLORS.map((name,i)=>`<button type="button" class="code-color" data-color-choice="${i}" aria-label="${name}, color ${i+1}">${codePeg(i,icon)}<span>${i+1}</span></button>`).join('')}</div>${btn('submit','Check guess','check','id="code-submit"')}${btn('clear','Clear','erase','id="code-clear"')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><p class="quick-feedback" id="code-feedback">Choose a slot, then a symbol.</p><p class="quick-best" id="more-best"></p><p class="instructions">Exact: correct symbol and position.<br>Close: correct symbol in another position.<br><kbd>1–6</kbd> choose · <kbd>← →</kbd> slots · <kbd>Enter</kbd> check</p></section>`;
     if(id==='sliding') return `${header}${options(id,s)}<div class="stats"><div class="stat"><span class="stat-label">MOVES</span><span class="stat-value" id="more-score"></span></div><div class="stat stat-best"><span class="stat-label">TILES IN PLACE</span><span class="stat-value" id="more-secondary"></span></div></div><div class="board-wrap"><div class="sliding-board" id="sliding-board" role="group" tabindex="0" aria-label="Sliding puzzle board. Arrow keys move the empty space." style="--grid-size:${s.size}"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="game-tools">${btn('undo','Undo','undo','id="more-undo"')}<span class="move-count">Arrange 1 to ${s.size**2-1}</span></div><p class="quick-best" id="more-best"></p><p class="instructions">Tap a tile beside the gap to slide it.<br><kbd>↑ ↓ ← →</kbd> move the empty space.<br>Finish with the gap in the bottom-right corner.</p></section>`;
+    if(id==='wordle') {
+      const KEYBOARD_ROWS=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['enter','z','x','c','v','b','n','m','back']];
+      return `${header}<div class="wordle-rules">Guess a five-letter word · six tries</div><div class="board-wrap"><div class="wordle-board" id="wordle-board" role="group" aria-label="Wordle guess board">${Array.from({length:6},(_,r)=>`<div class="wordle-row">${Array.from({length:5},(_,c)=>`<span class="wordle-tile" data-row="${r}" data-col="${c}"></span>`).join('')}</div>`).join('')}</div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="wordle-keyboard" id="wordle-keyboard" role="group" aria-label="On-screen keyboard">${KEYBOARD_ROWS.map(row=>`<div class="wordle-kb-row">${row.map(k=>k==='enter'?`<button type="button" class="wordle-key wide" data-wkey="enter" aria-label="Submit guess">${icon('check')}</button>`:k==='back'?`<button type="button" class="wordle-key wide" data-wkey="back" aria-label="Delete letter">${icon('undo')}</button>`:`<button type="button" class="wordle-key" data-wkey="${k}">${k}</button>`).join('')}</div>`).join('')}</div><p class="quick-feedback" id="wordle-feedback">Type a word and press Enter.</p><p class="quick-best" id="more-best"></p><p class="instructions">Type a five-letter word and press Enter to guess.<br><kbd>A–Z</kbd> type · <kbd>Enter</kbd> submit · <kbd>Backspace</kbd> delete</p></section>`;
+    }
     return `${header}<div class="checkers-topline"><select id="connect-mode" aria-label="Connect Four opponent"><option value="computer" ${s.mode==='computer'?'selected':''}>Vs computer</option><option value="local" ${s.mode==='local'?'selected':''}>Two players</option></select><span id="connect-turn"></span></div><div class="connect-players"><span><i data-player="1"></i>${s.mode==='computer'?'You':'Coral'}</span><span><i data-player="-1"></i>${s.mode==='computer'?'Computer':'Mint'}</span></div><div class="board-wrap"><div class="connect-board" id="connect-board" role="group" aria-label="Connect Four board"></div><div class="board-overlay" id="more-overlay" hidden></div></div><div class="game-tools">${btn('undo','Undo','undo','id="more-undo"')}<span class="move-count" id="connect-count"></span></div><p class="instructions">Choose a column to drop your piece.<br>Connect four horizontally, vertically, or diagonally.<br><kbd>← →</kbd> choose column · <kbd>Enter</kbd> drop</p></section>`;
   }
   function finish(won,html) {
@@ -82,7 +94,62 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     if(focused&&!s.result) board.querySelector(`[data-connect="${column}"]`)?.focus({preventScroll:true});
     if(s.mode==='computer'&&s.turn===-1&&!s.result&&!aiTimer&&!suspended&&!moving&&!document.hidden) aiTimer=setTimeout(()=>{aiTimer=null;if(mounted==='connect'&&!suspended) {const col=chooseConnectColumn(state());if(col!==null) void playConnect(col);}},350);
   }
-  function update() {if(!root)return;if(mounted==='nonograms')updateNonogram();else if(mounted==='codebreaker')updateCode();else if(mounted==='sliding')updateSliding();else updateConnect();}
+  function runWatch() {
+    clearTimeout(watchTimer);watchTimer=null;const s=state();if(!s||s.phase!=='watch'||s.result)return;
+    const token=++watchToken;let step=0;
+    root.querySelectorAll('.simon-pad').forEach(p=>p.classList.remove('lit'));
+    function next() {
+      if(token!==watchToken||mounted!=='simon')return;
+      if(step>0) root.querySelector(`[data-pad="${s.sequence[step-1]}"]`)?.classList.remove('lit');
+      if(step>=s.round){watchTimer=setTimeout(()=>{if(token!==watchToken||mounted!=='simon')return;set(startPlayPhase(state()));},350);return;}
+      const pad=root.querySelector(`[data-pad="${s.sequence[step]}"]`);pad?.classList.add('lit');step++;
+      watchTimer=setTimeout(next,600);
+    }
+    watchTimer=setTimeout(next,400);
+  }
+  function updateSimon() {
+    const s=state();
+    root.querySelector('#more-score').textContent=s.round;root.querySelector('#more-secondary').textContent=s.best===null?'—':s.best;
+    root.querySelector('#more-best').textContent=`Personal best · ${s.best===null?'Set your first record':'Round '+s.best}`;
+    root.querySelectorAll('.simon-pad').forEach(p=>{p.disabled=s.phase!=='play'||!!s.result;});
+    root.querySelector('#simon-feedback').textContent=s.result?'Game over.':s.phase==='watch'?'Watch the pattern…':'Your turn — repeat the sequence.';
+    const overlay=root.querySelector('#more-overlay');
+    if(s.phase==='watch'&&!s.result&&!watchTimer&&!suspended) runWatch();
+    finish(false,s.result?`<h2>Round ${s.round} — ${s.round>3?'a solid run':'better luck next time'}.</h2><p>${s.moves} tap${s.moves!==1?'s':''} total.</p>`:'');
+  }
+  function updateFlood() {
+    const s=state(),region=s.result?new Set():floodRegion(s.board,s.size),board=root.querySelector('#flood-board');
+    board.innerHTML=s.board.map((c,i)=>`<span class="flood-cell${region.has(i)?' flooded':''}" data-color="${c}" aria-label="Row ${Math.floor(i/s.size)+1}, column ${i%s.size+1}: ${FLOOD_COLORS[c]}"></span>`).join('');
+    root.querySelector('#more-score').textContent=s.moves;root.querySelector('#more-secondary').textContent=s.maxMoves-s.moves;
+    const bestVal=s.best[s.difficulty];root.querySelector('#more-best').textContent=`Personal best · ${bestVal===null?'Set your first record':bestVal+' moves'}`;
+    root.querySelectorAll('.flood-color').forEach(b=>{const ci=Number(b.dataset.flood);b.classList.toggle('current',ci===s.board[0]);b.disabled=!!s.result||ci===s.board[0];});
+    root.querySelector('#flood-feedback').textContent=s.result?s.result==='won'?'Board cleared!':'Out of moves.':`${s.maxMoves-s.moves} move${s.maxMoves-s.moves!==1?'s':''} remaining.`;
+    board.inert=!!s.result;root.querySelector('.flood-palette').inert=!!s.result;
+    finish(s.result==='won',s.result?`<h2>${s.result==='won'?'Board cleared!':'Flooded out.'}</h2><p>${s.result==='won'?`You filled the board in ${s.moves} moves.`:`Couldn’t fill the board in ${s.maxMoves} moves.`}</p>`:'');
+  }
+  function updateWordle() {
+    const s=state(),board=root.querySelector('#wordle-board');
+    // Fill the 6×5 grid with guesses, then current draft, then empties
+    for(let r=0;r<6;r++){
+      for(let c=0;c<5;c++){
+        const tile=board.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+        if(r<s.guesses.length){const g=s.guesses[r];tile.textContent=g.word[c];tile.className=`wordle-tile ${g.feedback[c]}`;}
+        else if(r===s.guesses.length&&c<s.draft.length){tile.textContent=s.draft[c];tile.className='wordle-tile filled';}
+        else{tile.textContent='';tile.className='wordle-tile';}
+      }
+    }
+    // Update keyboard highlights
+    root.querySelectorAll('[data-wkey]').forEach(key=>{
+      const letter=key.dataset.wkey;
+      if(letter.length===1&&s.keyboard[letter]) key.setAttribute('data-state',s.keyboard[letter]);
+      else key.removeAttribute('data-state');
+    });
+    root.querySelector('#wordle-feedback').textContent=s.result?s.result==='won'?`You found it in ${s.guesses.length} guess${s.guesses.length>1?'es':''}!`:`The word was ${s.target.toUpperCase()}.`:`Guess ${s.guesses.length+1} of 6`;
+    root.querySelector('#more-best').textContent=`Personal best · ${s.best===null?'Set your first record':s.best+' guess'+(s.best>1?'es':'')}`;
+    root.querySelector('#wordle-keyboard').inert=!!s.result;
+    finish(s.result==='won',s.result?`<h2>${s.result==='won'?'Well guessed!':'Better luck next time.'}</h2><p>${s.result==='won'?`You found the word in ${s.guesses.length} guess${s.guesses.length>1?'es':''}.`:`The word was <strong>${s.target.toUpperCase()}</strong>.`}</p>`:'');
+  }
+  function update() {if(!root)return;if(mounted==='nonograms')updateNonogram();else if(mounted==='codebreaker')updateCode();else if(mounted==='sliding')updateSliding();else if(mounted==='wordle')updateWordle();else if(mounted==='simon')updateSimon();else if(mounted==='flood')updateFlood();else updateConnect();}
   function set(next) {if(next===state())return false;getSave().games[mounted]=next;persist();update();return true;}
   function cancelMotion() {motion++;moving=false;animations.forEach(a=>a.cancel());animations=[];}
   function markSquare(index,mark){if(set(markNonogram(state(),index,mark))){void sound.play(isNonogramComplete(state())?'win':'tick');announce(isNonogramComplete(state())?'Nonogram picture complete.':`Square ${index+1} ${state().cells[index]===1?'filled':state().cells[index]===-1?'crossed':'cleared'}.`);}}
@@ -107,6 +174,15 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     if(target.dataset.colorChoice!==undefined){set(enterCode(state(),cursor,Number(target.dataset.colorChoice)));cursor=(cursor+1)%4;update();focus();void sound.play('tick');return;}
     if(target.dataset.slide!==undefined){void playSlide(Number(target.dataset.slide));return;}
     if(target.dataset.connect!==undefined){if(state().mode!=='computer'||state().turn===1)void playConnect(Number(target.dataset.connect));return;}
+    if(target.dataset.wkey!==undefined){
+      const key=target.dataset.wkey,s=state();if(s.result)return;
+      if(key==='enter'){const next=submitGuess(s);if(set(next)){void sound.play(next.result==='won'?'win':next.result==='lost'?'error':'merge');announce(next.result==='won'?'Correct!':next.result==='lost'?`The word was ${next.target}.`:'Guess submitted.');}}
+      else if(key==='back'){set(deleteLetter(s));}
+      else{set(enterLetter(s,key));void sound.play('tick');}
+      return;
+    }
+    if(target.dataset.pad!==undefined){const s=state();if(s.phase==='play'&&!s.result){if(set(tapSimon(s,Number(target.dataset.pad)))){const ns=state();void sound.play(ns.result?'error':'tick');announce(ns.result?`Wrong pad. Game over at round ${ns.round}.`:`Pad ${Number(target.dataset.pad)+1}.`);}}return;}
+    if(target.dataset.flood!==undefined){const s=state();if(!s.result){if(set(pickFlood(s,Number(target.dataset.flood)))){const ns=state();void sound.play(ns.result==='won'?'win':ns.result==='lost'?'error':'tick');announce(ns.result==='won'?'Board cleared!':ns.result==='lost'?'Out of moves.':`Picked ${FLOOD_COLORS[Number(target.dataset.flood)]}.`);}}return;}
     const action=target.dataset.more;
     if(action==='new')onNew(mounted);
     else if(action==='fill-mode'||action==='cross-mode'){crossMode=action==='cross-mode';update();focus();}
@@ -132,14 +208,26 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
       else if(e.key.toLowerCase()==='x'){e.preventDefault();if(!e.repeat)markSquare(index,-1);}
       else if(e.key==='Enter'){e.preventDefault();if(!e.repeat)markSquare(index,1);}
     } else if(mounted==='connect'&&e.target.dataset.connect!==undefined&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();let col=Number(e.target.dataset.connect),step=e.key==='ArrowLeft'?-1:1;for(let i=0;i<7;i++){col=(col+step+7)%7;const node=root.querySelector(`[data-connect="${col}"]`);if(!node.disabled){root.querySelectorAll('[data-connect]').forEach(n=>{n.tabIndex=n===node?0:-1;});node.focus({preventScroll:true});break;}}}
+    else if(mounted==='wordle') {
+      const s=state();if(s.result)return;
+      if(/^[a-zA-Z]$/.test(e.key)&&!e.repeat){e.preventDefault();set(enterLetter(s,e.key.toLowerCase()));void sound.play('tick');}
+      else if(e.key==='Backspace'||e.key==='Delete'){e.preventDefault();set(deleteLetter(s));}
+      else if(e.key==='Enter'){e.preventDefault();const next=submitGuess(s);if(set(next)){void sound.play(next.result==='won'?'win':next.result==='lost'?'error':'merge');announce(next.result==='won'?'Correct!':next.result==='lost'?`The word was ${next.target}.`:'Guess submitted.');}}
+    }
+    else if(mounted==='simon') {
+      if(/^[1-4]$/.test(e.key)&&!e.repeat){e.preventDefault();const s=state();if(s.phase==='play'&&!s.result){if(set(tapSimon(s,Number(e.key)-1))){const ns=state();void sound.play(ns.result?'error':'tick');announce(ns.result?`Wrong pad. Game over at round ${ns.round}.`:`Pad ${e.key}.`);}}}
+    }
+    else if(mounted==='flood') {
+      if(/^[1-6]$/.test(e.key)&&!e.repeat){e.preventDefault();const s=state();if(!s.result){if(set(pickFlood(s,Number(e.key)-1))){const ns=state();void sound.play(ns.result==='won'?'win':ns.result==='lost'?'error':'tick');announce(ns.result==='won'?'Board cleared!':ns.result==='lost'?'Out of moves.':`Picked ${FLOOD_COLORS[Number(e.key)-1]}.`);}}}
+    }
   }
   function focus() {
     if(!root)return;const overlay=root.querySelector('#more-overlay');
-    const node=!overlay.hidden?overlay.querySelector('button'):mounted==='codebreaker'?root.querySelector(`[data-slot="${cursor}"]`):mounted==='sliding'?root.querySelector('#sliding-board'):root.querySelector('[tabindex="0"]');node?.focus({preventScroll:true});
+    const node=!overlay.hidden?overlay.querySelector('button'):mounted==='codebreaker'?root.querySelector(`[data-slot="${cursor}"]`):mounted==='sliding'?root.querySelector('#sliding-board'):mounted==='wordle'?root.querySelector('#wordle-keyboard [data-wkey]'):mounted==='simon'?root.querySelector('[data-pad="0"]'):mounted==='flood'?root.querySelector('.flood-color:not(:disabled)'):root.querySelector('[tabindex="0"]');node?.focus({preventScroll:true});
   }
   function mount(id) {
     mounted=id;root=document.getElementById('more-game');crossMode=false;cursor=id==='codebreaker'?Math.max(0,state().draft.findIndex(n=>n===null)):0;suspended=false;
-    const change=e=>{if(e.target.id==='more-difficulty'||e.target.id==='connect-mode'){const value=e.target.value;e.target.value=state().difficulty??state().mode;onNew(id,value);}};
+    const change=e=>{if(e.target.id==='more-difficulty'||e.target.id==='connect-mode'){const value=e.target.value;e.target.value=mounted==='flood'?state().difficulty:state().difficulty??state().mode;onNew(id,value);}};
     const context=e=>{const cell=e.target.closest('[data-nono]');if(id==='nonograms'&&cell){e.preventDefault();markSquare(Number(cell.dataset.nono),-1);}};
     const inactive=()=>{clearTimeout(aiTimer);aiTimer=null;},active=()=>{if(mounted==='connect'&&!document.hidden)update();};
     root.addEventListener('click',click);root.addEventListener('keydown',keydown);root.addEventListener('change',change);root.addEventListener('contextmenu',context);
@@ -147,8 +235,8 @@ export function createMoreGames({getSave,persist,sound,icon,announce,onNew}) {
     const visibility=()=>document.hidden?inactive():active();document.addEventListener('visibilitychange',visibility);const element=root;
     cleanup.push(()=>{element.removeEventListener('click',click);element.removeEventListener('keydown',keydown);element.removeEventListener('change',change);element.removeEventListener('contextmenu',context);window.removeEventListener('blur',inactive);window.removeEventListener('focus',active);document.removeEventListener('visibilitychange',visibility);});update();
   }
-  function dispose(){cancelMotion();clearTimeout(aiTimer);aiTimer=null;cleanup.forEach(fn=>fn());cleanup=[];mounted=null;root=null;}
-  function suspend(){if(!mounted)return;suspended=true;clearTimeout(aiTimer);aiTimer=null;cancelMotion();update();}
+  function dispose(){cancelMotion();clearTimeout(aiTimer);aiTimer=null;clearTimeout(watchTimer);watchTimer=null;watchToken++;cleanup.forEach(fn=>fn());cleanup=[];mounted=null;root=null;}
+  function suspend(){if(!mounted)return;suspended=true;clearTimeout(aiTimer);aiTimer=null;clearTimeout(watchTimer);watchTimer=null;watchToken++;cancelMotion();update();}
   function resume(){if(!mounted)return;suspended=false;update();}
   return {render,mount,dispose,focus,suspend,resume,isMounted:()=>mounted!==null};
 }

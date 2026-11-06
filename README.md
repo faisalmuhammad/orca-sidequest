@@ -16,10 +16,10 @@ Requires **Orca desktop 1.4.248 or newer**.
 2. Choose **Add plugin → From a Git URL…** and enter:
 
    ```text
-   https://github.com/faisalmuhammad/orca-sidequest#v0.3.1
+   https://github.com/faisalmuhammad/orca-sidequest#v0.4.0
    ```
 
-   Keep `#v0.3.1` at the end. Orca requires a release tag or commit hash to install from Git.
+   Keep `#v0.4.0` at the end. Orca requires a release tag or commit hash to install from Git.
 3. Review and approve the requested access: a **sandboxed panel** and **plugin-owned storage** for saved progress.
 4. Select **Sidequest** using the puzzle icon in the right sidebar, then pick a game. **All games** returns to the picker; the selector switches games directly.
 
@@ -49,6 +49,11 @@ Pick a quick game from the library. Each keeps its own progress, and the artwork
     <td align="center"><img src="assets/games/sliding.png" alt="Sliding Puzzle card artwork: numbered tiles around an empty space" width="240"><br><strong>Sliding Puzzle</strong><br><sub>One empty space. A little order.</sub></td>
     <td align="center"><img src="assets/games/connect.png" alt="Connect Four card artwork: coral and mint pieces in a grid" width="240"><br><strong>Connect Four</strong><br><sub>Think ahead. Connect your next four.</sub></td>
     <td align="center"><img src="assets/games/sokoban.png" alt="Sokoban card artwork: a crate, player, and glowing target in a small room" width="240"><br><strong>Sokoban</strong><br><sub>Make room. Deliver every crate.</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/games/wordle.png" alt="Wordle card artwork: green and yellow letter tiles" width="240"><br><strong>Wordle</strong><br><sub>Five letters. Six tries. One word.</sub></td>
+    <td align="center"><img src="assets/games/simon.png" alt="Simon card artwork: four colored pads in a circle" width="240"><br><strong>Simon</strong><br><sub>Watch. Remember. Repeat the pattern.</sub></td>
+    <td align="center"><img src="assets/games/flood.png" alt="Flood Fill card artwork: a multicolored grid" width="240"><br><strong>Flood Fill</strong><br><sub>Fill the board in limited moves.</sub></td>
   </tr>
 </table>
 
@@ -107,7 +112,7 @@ Open http://127.0.0.1:4318. Set `SIDEQUEST_PREVIEW_PORT` to change the port. Wit
 
 Game rules live in `panel/games/`; panel modules handle rendering and controls; `panel/storage.mjs` handles persistence. Keep new games self-contained, keyboard and touch accessible, compact, and dependency-free. Register their creator and validator, add a picker entry, and test rules, save recovery, and interaction.
 
-Validated on macOS with Orca **1.4.250**: **75** rules, sound, and save tests; browser checks at **320px** and **240px**, including the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
+Validated on macOS with Orca **1.4.250**: **115** rules, sound, and save tests; browser checks at **320px** and **240px**, including the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
 
 The manifest references release images in `assets/`. Vector sources and original captures are retained under `assets/source/`. Run `scripts/release-art.mjs` to render artwork and `scripts/release-shots.mjs` with the preview running to capture the interface. These optional image tools use Sharp. Install it locally with `npm install --no-save --package-lock=false sharp`, or set `SHARP_MODULE` to an installed ESM module. Sharp is not a runtime dependency.
 

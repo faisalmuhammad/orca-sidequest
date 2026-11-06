@@ -69,8 +69,8 @@ test('storage failures retain device progress and are reported, without unhandle
 
 test('older saves gain new game slots without losing sound preferences or progress',()=> {
   const original={version:1,updatedAt:5,activeGame:'2048',games:{'2048':create2048(),sudoku:null}};
-  const restored=normalizeSave(original,validators).save;assert.deepEqual(restored.games['2048'],original.games['2048']);assert.equal(restored.games.checkers,null);assert.equal(restored.games.minesweeper,null);assert.equal(restored.games.lights,null);assert.deepEqual(restored.preferences,{sound:false,numberFirst:false,libraryView:'compact'});
-  assert.deepEqual(normalizeSave({...original,preferences:{sound:true,numberFirst:true}},validators).save.preferences,{sound:true,numberFirst:true,libraryView:'compact'});
+  const restored=normalizeSave(original,validators).save;assert.deepEqual(restored.games['2048'],original.games['2048']);assert.equal(restored.games.checkers,null);assert.equal(restored.games.minesweeper,null);assert.equal(restored.games.lights,null);assert.deepEqual(restored.preferences,{sound:false,numberFirst:false,libraryView:'compact',sortOrder:'recommended'});
+  assert.deepEqual(normalizeSave({...original,preferences:{sound:true,numberFirst:true}},validators).save.preferences,{sound:true,numberFirst:true,libraryView:'compact',sortOrder:'recommended'});
 });
 test('new games and library density round-trip without disturbing existing saves',()=> {
   const value=emptySave(); value.activeGame='lights'; value.games['2048']=create2048();
