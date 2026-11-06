@@ -1,6 +1,6 @@
 {
   "name": "sidequest",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Quick games in a compact Orca sidebar.",
@@ -10,6 +10,7 @@
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:browser:wordle": "node scripts/browser-wordle.mjs",
     "test:browser:keyboard": "node scripts/browser-keyboard.mjs",
+    "test:browser:arcade": "node scripts/browser-arcade.mjs",
     "preview": "node scripts/preview.mjs"
   },
   "engines": {

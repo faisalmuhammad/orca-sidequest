@@ -88,7 +88,7 @@ if (!process.argv.includes('--extras')) {
 await seed(emptySave());
 await layout('game picker');
 await screenshot('picker-preview');
-assert.equal(await evaluate(`document.querySelectorAll('.game-card').length`),15);
+assert.equal(await evaluate(`document.querySelectorAll('.game-card').length`),Object.keys(emptySave().games).length);
 assert.equal(await evaluate(`document.querySelector('[data-action="library-view"]').nextElementSibling.id`),'sound-button');
 assert.equal(await evaluate(`getComputedStyle(document.getElementById('game-library')).gridTemplateColumns.split(' ').length`),2);
 const compactHeight=await evaluate(`document.getElementById('game-library').getBoundingClientRect().height`);

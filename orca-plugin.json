@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "sidequest",
   "name": "Sidequest - Quick Games in Orca",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Refresh your mind with quick games while your agents work. One compact sidebar, with saved progress and room for more games.",
   "license": "MIT",
   "engines": {

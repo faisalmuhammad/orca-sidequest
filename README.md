@@ -16,10 +16,10 @@ Requires **Orca desktop 1.4.248 or newer**.
 2. Choose **Add plugin → From a Git URL…** and enter:
 
    ```text
-   https://github.com/faisalmuhammad/orca-sidequest#v0.4.1
+   https://github.com/faisalmuhammad/orca-sidequest#v0.5.0
    ```
 
-   Keep `#v0.4.1` at the end. Orca requires a release tag or commit hash to install from Git.
+   Keep `#v0.5.0` at the end. Orca requires a release tag or commit hash to install from Git.
 3. Review and approve the requested access: a **sandboxed panel** and **plugin-owned storage** for saved progress.
 4. Select **Sidequest** using the puzzle icon in the right sidebar, then pick a game. **All games** returns to the picker; the selector switches games directly.
 
@@ -55,6 +55,16 @@ Pick a quick game from the library. Each keeps its own progress, and the artwork
     <td align="center"><img src="assets/games/simon.png" alt="Simon card artwork: four colored pads in a circle" width="240"><br><strong>Simon</strong></td>
     <td align="center"><img src="assets/games/flood.png" alt="Flood Fill card artwork: a multicolored grid" width="240"><br><strong>Flood Fill</strong></td>
   </tr>
+  <tr>
+    <td align="center"><img src="assets/games/snake.png" alt="Snake card artwork: mint square tiles on a green board" width="240"><br><strong>Snake</strong></td>
+    <td align="center"><img src="assets/games/pipes.png" alt="Pipe Connect card artwork: connected pipe tiles" width="240"><br><strong>Pipe Connect</strong></td>
+    <td align="center"><img src="assets/games/bubbles.png" alt="Bubble Shooter card artwork: colored bubbles in a violet frame" width="240"><br><strong>Bubble Shooter</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/games/reversi.png" alt="Reversi card artwork: ink and pearl discs on a green board" width="240"><br><strong>Reversi</strong></td>
+    <td align="center"><img src="assets/games/breakout.png" alt="Brick Breaker card artwork: colorful bricks, a ball and mint paddle" width="240"><br><strong>Brick Breaker</strong></td>
+    <td align="center"><img src="assets/games/flow.png" alt="Flow Connect card artwork: mint and violet paths joining endpoints" width="240"><br><strong>Flow Connect</strong></td>
+  </tr>
 </table>
 
 ## Previews
@@ -76,6 +86,7 @@ The previews combine **actual interface captures from Orca’s embedded browser*
 | Thoughtful motion | Smooth transitions, with reduced-motion support |
 | Light and dark | Styling follows Orca’s appearance |
 | Library views | Switch between compact tiles and expanded cards with the header button beside sound; your choice is saved |
+| Fresh puzzles | Connection puzzles generate solvable boards locally |
 | Sidebar layout | Works in narrow sidebars; real-time play pauses when you leave |
 
 ## Progress and access
@@ -108,17 +119,19 @@ npm run preview
 
 Open http://127.0.0.1:4318. Set `SIDEQUEST_PREVIEW_PORT` to change the port. With the preview running and Orca open, run `npm run test:browser` to check real input, game switching, save recovery, narrow layouts, and audio output. Diagnostic captures are saved under `.orca/shots/`.
 
-Run `npm run test:browser:keyboard` to check physical keyboard input in all 15 games, including restored panels, toolbar focus, undo, pause, and game switching. It restores the preview’s previous saved progress. Use `npm run test:browser:keyboard -- --game sliding` to check Sliding Puzzle’s tile directions, edges, completion, undo, and focus on both board sizes.
+Run `npm run test:browser:keyboard` to check physical keyboard input in all 21 games, including restored panels, toolbar focus, undo, pause, and game switching. It restores the preview’s previous saved progress. Use `npm run test:browser:keyboard -- --game sliding` to check Sliding Puzzle’s tile directions, edges, completion, undo, and focus on both board sizes.
+
+Run `npm run test:browser:arcade` for the six games introduced in 0.5.0, including keyboard firing, animation fallback, generated puzzles, pointer paths, and automatic pauses. Use `-- --game snake` (or another game id) to focus on one.
 
 Run `npm run test:browser:wordle` for focused keyboard checks: restored panels, board clicks, toolbar focus, text editing, dialogs, replay, and switching games. These checks restore the standalone preview’s previous save.
 
 Game rules live in `panel/games/`; panel modules handle rendering and controls; `panel/storage.mjs` handles persistence. Keep new games self-contained, keyboard and touch accessible, compact, and dependency-free. Register their creator and validator, add a picker entry, and test rules, save recovery, and interaction.
 
-Validated on macOS with Orca **1.4.250**: **115** rules, sound, and save tests; browser checks at **320px** and **240px**, including all 15 games’ keyboard controls and the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
+Validated on macOS with Orca **1.4.250**: **137** rules, sound, and save tests; browser checks at **320px** and **240px**, including all 21 games’ keyboard controls and the full Sokoban campaign; Orca validation/checks; and native panel captures without runtime errors.
 
 The manifest references release images in `assets/`. Vector sources and original captures are retained under `assets/source/`. Run `scripts/release-art.mjs` to render artwork and `scripts/release-shots.mjs` with the preview running to capture the interface. These optional image tools use Sharp. Install it locally with `npm install --no-save --package-lock=false sharp`, or set `SHARP_MODULE` to an installed ESM module. Sharp is not a runtime dependency.
 
-Run `node scripts/release-gallery.mjs` with the preview running and Orca open to refresh the README’s game artwork in `assets/games/`. It captures the panel’s own card previews, restores the preview’s previous saved progress, and needs no image dependencies.
+Run `node scripts/release-gallery.mjs` with the preview running and Orca open to refresh the README’s game artwork in `assets/games/`. It captures the panel’s own card previews, restores the preview’s previous saved progress, and needs no image dependencies. Use `--games snake,pipes,bubbles,reversi,breakout,flow` to refresh just the new thumbnails.
 
 Exclude `node_modules/` and `.orca/` from Git and release uploads.
 
@@ -128,4 +141,4 @@ Exclude `node_modules/` and `.orca/` from Git and release uploads.
 
 An independent community plugin, maintained by [faisalmuhammad](https://github.com/faisalmuhammad). Sidequest is not affiliated with Orca.
 
-Plugin code and original artwork use [MIT](LICENSE). The shared puzzle glyph comes from [Lucide](https://lucide.dev), matching Orca’s built-in icon. Its ISC license and upstream notices are preserved in [LICENSE-LUCIDE](LICENSE-LUCIDE).
+Plugin code and original artwork use [MIT](LICENSE). The new games use original code, visuals, and generated puzzles. Brick Breaker is Sidequest’s paddle-and-brick game; no original Breakout artwork, code, or branding is included. The shared puzzle glyph comes from [Lucide](https://lucide.dev), matching Orca’s built-in icon. Its ISC license and upstream notices are preserved in [LICENSE-LUCIDE](LICENSE-LUCIDE).

@@ -1,3 +1,5 @@
+import { runArcadeSmoke } from './browser-arcade.mjs';
+import { ARCADE_NAMES } from '../panel/arcade-cards.mjs';
 // Physical keyboard regression checks for every game in Orca's embedded browser.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -22,7 +24,8 @@ import { createSimon } from '../panel/games/simon.mjs';
 import { createFlood } from '../panel/games/flood.mjs';
 const rng = seed => () => { seed=(1664525*seed+1013904223)>>>0;return seed/2**32; };
 
-export async function runKeyboardSmoke({game=null}={}) {
+export async function runKeyboardSmoke({game=null,includeArcade=true}={}) {
+  if(game!==null&&Object.hasOwn(ARCADE_NAMES,game))return runArcadeSmoke({game});
   const gameIds=['2048','sudoku','checkers','blocks','memory','minesweeper','lights','nonograms','codebreaker','sliding','connect','sokoban','wordle','simon','flood'];
   assert.ok(game===null||gameIds.includes(game),'Unknown game: '+game);
   const run=promisify(execFile),cli=process.env.ORCA_CLI_COMMAND??'orca';
@@ -248,6 +251,7 @@ export async function runKeyboardSmoke({game=null}={}) {
     try{if(capturedOriginal)await evaluate('(() => {const put=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key!=='+journal+')return put.call(this,key,value);};const raw='+JSON.stringify(original)+';if(raw===null)localStorage.removeItem('+journal+');else put.call(localStorage,'+journal+',raw);return true;})()');}
     finally{await command('tab','close','--page',page);}
   }
-  console.log((game===null?'All 15 games':game)+' passed keyboard checks; original preview save restored.');
+  if(game===null&&includeArcade)await runArcadeSmoke();
+  console.log((game===null?(includeArcade?'All 21 games':'Original 15 games'):game)+' passed keyboard checks; original preview save restored.');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)await runKeyboardSmoke({game:process.argv.includes('--game')?process.argv[process.argv.indexOf('--game')+1]:null});

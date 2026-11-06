@@ -8,6 +8,7 @@ const run = promisify(execFile);
 const cli = process.env.ORCA_CLI_COMMAND ?? 'orca';
 const url = `http://127.0.0.1:${process.env.SIDEQUEST_PREVIEW_PORT ?? 4318}/`;
 const output = new URL('../assets/games/', import.meta.url);
+const requested = process.argv.includes('--games') ? new Set(process.argv[process.argv.indexOf('--games') + 1].split(',')) : null;
 await mkdir(output, { recursive: true });
 async function command(...args) {
   const { stdout } = await run(cli, [...args, '--json'], { maxBuffer: 2 ** 20, timeout: 60000 });
@@ -45,7 +46,8 @@ try {
     return window.__galleryCards.map(({id, name}) => ({id, name}));
   })()`);
   if (!cards.length) throw new Error('No game cards were found.');
-  for (const { id, name } of cards) {
+  if (requested) for (const id of requested) if (!cards.some(card => card.id === id)) throw new Error('Unknown game: ' + id);
+  for (const { id, name } of cards.filter(card => !requested || requested.has(card.id))) {
     if (!/^[a-z0-9-]+$/.test(id)) throw new Error('Invalid game card id.');
     await evaluate(`(() => { const frame = document.getElementById('gallery-art'); frame.replaceChildren(window.__galleryCards.find(card => card.id === ${JSON.stringify(id)}).art); return true; })()`);
     const shot = await act('screenshot');

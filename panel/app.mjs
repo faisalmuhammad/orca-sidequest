@@ -1,3 +1,5 @@
+import { ARCADE_NAMES, arcadeProgress, arcadeComplete } from './arcade-cards.mjs';
+import { ARCADE_VALIDATORS } from './arcade-games.mjs';
 import { bindGameKeyboard } from './keyboard.mjs';
 import { create2048, move2048, undo2048, is2048Over, isValid2048 } from './games/2048.mjs';
 import { DIFFICULTIES, createSudoku, peers, sudokuConflicts, enterSudoku, hintSudoku, autoNotesSudoku, newlyCompletedCells, undoSudoku, isSudokuComplete, isValidSudoku } from './games/sudoku.mjs';
@@ -56,8 +58,8 @@ const paths = {
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
 const format = value => value.toLocaleString();
 const ALL_NAMES = { '2048': '2048', sudoku: 'Sudoku', ...EXTRA_NAMES };
-const RECOMMENDED_ORDER = ['2048','sudoku','checkers','blocks','memory','minesweeper','lights','nonograms','codebreaker','sliding','connect','sokoban','wordle','simon','flood'];
-const CATEGORIES = [['Strategy',['2048','checkers','connect']],['Puzzle',['sudoku','nonograms','sliding','lights','sokoban','flood']],['Word & Logic',['wordle','codebreaker','minesweeper']],['Action & Memory',['blocks','memory','simon']]];
+const RECOMMENDED_ORDER = ['2048','sudoku','checkers','blocks','memory','minesweeper','lights','breakout','codebreaker','sliding','connect','sokoban','wordle','simon','flood','bubbles','snake','flow','nonograms','pipes','reversi'];
+const CATEGORIES = [['Strategy',['2048','checkers','connect','reversi']],['Puzzle',['sudoku','nonograms','sliding','lights','sokoban','flood','pipes','flow']],['Word & Logic',['wordle','codebreaker','minesweeper']],['Action & Memory',['blocks','memory','simon','snake','bubbles','breakout']]];
 const duration = milliseconds => {
   const seconds = Math.floor(milliseconds / 1000);
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -356,7 +358,7 @@ function enterNumber(value) {
 }
 function confirmNew(game, difficulty) {
   const state = save.games[game];
-  const hasProgress = game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : game === 'minesweeper' ? state.started || state.flags.some(Boolean) : ['lights','nonograms','sliding','connect','sokoban'].includes(game) ? state.moves > 0 : game === 'codebreaker' ? state.guesses.length > 0 || state.draft.some(n => n !== null) : game === 'wordle' ? state.guesses.length > 0 || state.draft.length > 0 : game === 'simon' ? state.round > 1 || state.input.length > 0 : game === 'flood' ? state.moves > 0 : state.attempts > 0 || state.phase === 'play';
+  const hasProgress = Object.hasOwn(ARCADE_NAMES, game) ? arcadeProgress(game, state) : game === '2048' ? state.moves > 0 : game === 'sudoku' ? state.history.length > 0 || state.elapsedMs > 1000 : game === 'checkers' ? state.moves > 0 || state.forced !== null : game === 'blocks' ? state.pieces > 0 || !state.paused : game === 'minesweeper' ? state.started || state.flags.some(Boolean) : ['lights','nonograms','sliding','connect','sokoban'].includes(game) ? state.moves > 0 : game === 'codebreaker' ? state.guesses.length > 0 || state.draft.some(n => n !== null) : game === 'wordle' ? state.guesses.length > 0 || state.draft.length > 0 : game === 'simon' ? state.round > 1 || state.input.length > 0 : game === 'flood' ? state.moves > 0 : state.attempts > 0 || state.phase === 'play';
   const start = () => {
     clockStart = null;
     extras.dispose();
@@ -364,7 +366,7 @@ function confirmNew(game, difficulty) {
     selected = game === 'sudoku' ? save.games.sudoku.values.findIndex(value => !value) : 0;
     pencil = false; checked = false; message = ''; messageTone = ''; persist(); render(true);
   };
-  if (!hasProgress || (game === '2048' ? is2048Over(state.board) : game === 'sudoku' ? isSudokuComplete(state) : state.result || state.over || state.phase === 'complete' || (game === 'lights' && state.board.every(n => n === 0)) || (game === 'nonograms' && state.cells.every((n,i) => (n === 1 ? 1 : 0) === state.solution[i])) || (game === 'sliding' && state.board.every((n,i) => n === (i+1) % state.board.length)) || (game === 'sokoban' && isSokobanComplete(state)))) { start(); return; }
+  if (!hasProgress || (Object.hasOwn(ARCADE_NAMES, game) && arcadeComplete(game, state)) || (game === '2048' ? is2048Over(state.board) : game === 'sudoku' ? isSudokuComplete(state) : state.result || state.over || state.phase === 'complete' || (game === 'lights' && state.board.every(n => n === 0)) || (game === 'nonograms' && state.cells.every((n,i) => (n === 1 ? 1 : 0) === state.solution[i])) || (game === 'sliding' && state.board.every((n,i) => n === (i+1) % state.board.length)) || (game === 'sokoban' && isSokobanComplete(state)))) { start(); return; }
   document.getElementById('confirm-title').textContent = game === 'sokoban' ? Number.isInteger(difficulty) && difficulty !== state.level ? 'Switch levels?' : 'Restart this level?' : 'Start a new game?';
   document.getElementById('confirm-description').textContent = game === 'sokoban' ? 'Your moves in this level will be reset. Completed levels and records stay saved.' : 'Your current game will be replaced. Your personal best stays.';
   if (game === 'checkers') document.getElementById('checkers-mode').value = state.mode;
@@ -483,7 +485,7 @@ setInterval(() => {
 }, 1000);
 
 try {
-  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory, minesweeper:isValidMinesweeper, lights:isValidLights, nonograms:isValidNonogram, codebreaker:isValidCodebreaker, sliding:isValidSliding, connect:isValidConnect, sokoban:isValidSokoban, wordle:isValidWordle, simon:isValidSimon, flood:isValidFlood });
+  const restored = normalizeSave(await store.load(), { '2048': isValid2048, sudoku: isValidSudoku, checkers:isValidCheckers, blocks:isValidBlocks, memory:isValidMemory, minesweeper:isValidMinesweeper, lights:isValidLights, nonograms:isValidNonogram, codebreaker:isValidCodebreaker, sliding:isValidSliding, connect:isValidConnect, sokoban:isValidSokoban, wordle:isValidWordle, simon:isValidSimon, flood:isValidFlood, ...ARCADE_VALIDATORS });
   save = restored.save; initialized = true;
   if (save.activeGame === 'sudoku') selected = Math.max(0, save.games.sudoku.values.findIndex(value => !value));
   render();
